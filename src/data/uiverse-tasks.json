@@ -1,0 +1,48 @@
+[
+  {
+    "id": "1647123456789",
+    "text": "Buy groceries",
+    "completed": false,
+    "createdAt": "2026-03-18T10:30:00.000Z",
+    "dueDate": "today"
+  },
+  {
+    "id": "1647123456790",
+    "text": "Plan weekend activities",
+    "completed": true,
+    "createdAt": "2026-03-18T09:15:00.000Z",
+    "dueDate": "tomorrow",
+    "completedAt": "2026-03-18T09:26:18.227Z"
+  },
+  {
+    "id": "1647123456791",
+    "text": "Finish project presentation",
+    "completed": true,
+    "createdAt": "2026-03-18T08:00:00.000Z",
+    "dueDate": "today"
+  },
+  {
+    "id": "1647123456792",
+    "text": "Call dentist for appointment",
+    "completed": true,
+    "createdAt": "2026-03-18T07:45:00.000Z",
+    "dueDate": "tomorrow",
+    "completedAt": "2026-03-18T09:26:16.828Z"
+  },
+  {
+    "id": "1773825297017",
+    "text": "Play tekken",
+    "completed": true,
+    "createdAt": "2026-03-18T09:14:57.017Z",
+    "completedAt": "2026-03-18T09:15:12.517Z",
+    "dueDate": "today"
+  },
+  {
+    "id": "1773825998012",
+    "text": "Continue with the final task",
+    "completed": false,
+    "createdAt": "2026-03-18T09:26:38.012Z",
+    "completedAt": null,
+    "dueDate": "tomorrow"
+  }
+]

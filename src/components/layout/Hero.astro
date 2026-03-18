@@ -1,0 +1,341 @@
+---
+// Hero section for to-do list website
+// Fetch today's tasks for the mockup display
+
+// Define the task type
+interface Task {
+  id: string;
+  text: string;
+  completed: boolean;
+  dueDate?: string;
+}
+
+let todayTasks: Task[] = [];
+try {
+  const response = await fetch(`${Astro.url.origin}/api/tasks.json?type=uiverse`);
+  if (response.ok) {
+    const allTasks = await response.json();
+    // Filter for today's tasks and limit to 4
+    todayTasks = allTasks
+      .filter((task: Task) => task.dueDate === 'today')
+      .slice(0, 4);
+  }
+} catch (error) {
+  console.error('Failed to fetch tasks for hero display:', error);
+  // Fallback to sample data
+  todayTasks = [
+    { id: '1', text: 'Review project proposal', completed: false },
+    { id: '2', text: 'Call team meeting', completed: true },
+    { id: '3', text: 'Finish design mockups', completed: false },
+    { id: '4', text: 'Plan weekend trip', completed: false }
+  ];
+}
+---
+
+<style>
+/* From Uiverse.io by AatreyuShau */
+.button {
+  text-align: center;
+  transition: 0.3s ease-in-out;
+  cursor: pointer;
+  background-color: transparent;
+  filter: url(#handDrawnNoise);
+  display: inline-flex;
+  align-items: center;
+  user-select: none;
+  font-family: "Courier New", monospace;
+  font-size: 1.5rem;
+  font-weight: bold;
+  padding: 1em;
+  border-width: 0px;
+  border-radius: 2rem;
+  box-shadow: #33333366 4px 4px 0 1px;
+  animation: idle 1s infinite ease-in-out;
+}
+
+.highlight {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  fill: rgba(255, 225, 0, 0.5);
+  stroke: rgba(255, 225, 0, 0.5); /* Yellow highlighter */
+  stroke-width: 10;
+  stroke-linecap: round;
+  pointer-events: none;
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  transition: stroke-dashoffset 0.5s ease-in-out;
+}
+
+@keyframes idle {
+  0% {
+    filter: url(#handDrawnNoise);
+  }
+  50% {
+    rotate: 2.5deg;
+    filter: url(#handDrawnNoise2);
+  }
+  100% {
+    filter: url(#handDrawnNoise);
+  }
+}
+
+.button-cosm {
+  fill: #33333366;
+  transition: 0.3s ease-out;
+  scale: 0.5;
+  position: absolute;
+  translate: calc(-100% + 24px) 1.5rem;
+}
+
+.button:hover {
+  font-weight: bold;
+  border-width: 0px;
+  border-radius: 2rem;
+  rotate: -2.5deg;
+  animation: hover 2.5s infinite ease-in-out;
+}
+
+.button:hover .highlight {
+  stroke-dashoffset: 0;
+}
+
+.button:active .highlight {
+  stroke-dashoffset: 1000;
+  animation: highlight 5s infinite, col 0.5s forwards;
+  stroke: #bc4e2666;
+}
+
+@keyframes col {
+  0% {
+    stroke: rgba(255, 225, 0, 0.5);
+  }
+  100% {
+    stroke: #1c98eb66;
+  }
+}
+
+@keyframes highlight {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  25% {
+    stroke-dashoffset: 1000;
+  }
+  50% {
+    stroke-dashoffset: 1000;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes hover {
+  0% {
+    rotate: 0deg;
+    filter: url(#handDrawnNoise);
+    translate: 0 0px;
+  }
+  25% {
+    rotate: -1deg;
+    filter: url(#handDrawnNoise2);
+    translate: 0 -2px;
+  }
+  50% {
+    rotate: 0deg;
+    filter: url(#handDrawnNoise);
+    translate: 0 2px;
+  }
+  75% {
+    rotate: -1deg;
+    filter: url(#handDrawnNoise2);
+    translate: 0 -2px;
+  }
+  100% {
+    rotate: 0deg;
+    filter: url(#handDrawnNoise);
+    translate: 0 0px;
+  }
+}
+
+.button:hover .button-cosm {
+  rotate: -15deg;
+  translate: calc(-100% + 22px) 1.9rem;
+}
+
+.button:active .button-cosm {
+  fill: #333333f1;
+  rotate: -135deg;
+  translate: calc(-100% + 55px) 1.6rem;
+  animation: none;
+}
+
+.button:active {
+  font-weight: bold;
+  border-width: 0px;
+  border-radius: 2rem;
+  box-shadow: inset #333333f1 4px 4px 0 1px;
+  rotate: -2.5deg;
+  animation: active 1s infinite ease-in-out;
+}
+
+@keyframes active {
+  0% {
+    filter: url(#handDrawnNoiset);
+    translate: 0 -1px;
+  }
+  25% {
+    rotate: -3deg;
+  }
+  50% {
+    filter: url(#handDrawnNoiset2);
+    translate: 0 1px;
+  }
+  66% {
+    rotate: 1.5deg;
+  }
+  100% {
+    filter: url(#handDrawnNoiset);
+    translate: 0 -1px;
+  }
+}
+</style>
+
+<section class="bg-amber-50 py-24 px-4 relative overflow-hidden">
+  <div class="max-w-6xl mx-auto">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <!-- Left Content -->
+      <div class="text-left">
+        <h1 class="text-6xl md:text-7xl font-bold text-amber-900 mb-6 handwritten leading-tight">
+          Your Ideas,
+          <span class="text-amber-600">Organized</span>
+        </h1>
+        <p class="text-xl text-amber-700 mb-8 leading-relaxed handwritten max-w-lg">
+          Transform scattered thoughts into clear action items. Simple, beautiful task management that feels natural.
+        </p>
+        
+        <div class="flex flex-col sm:flex-row gap-4 mb-12">
+          <a href="#tasks" class="button">
+            <svg class="button-cosm" xmlns:xlink="http://www.w3.org/1999/xlink" fill="#000000" width="128" height="128" viewBox="0 0 256 256" id="Flat" xmlns="http://www.w3.org/2000/svg">
+              <path d="M243.07324,157.43945c-1.2334-1.47949-23.18847-27.34619-60.46972-41.05859-1.67579-17.97412-8.25293-34.36328-18.93653-46.87158C149.41309,52.8208,128.78027,44,104,44,54.51074,44,22.10059,88.57715,20.74512,90.4751a3.99987,3.99987,0,0,0,6.50781,4.65234C27.5625,94.6958,58.68359,52,104,52c22.36816,0,40.89648,7.85107,53.584,22.70508,8.915,10.437,14.65625,23.9541,16.65528,38.894A133.54185,133.54185,0,0,0,136,108c-25.10742,0-46.09473,6.48486-60.69434,18.75391-12.65234,10.63379-19.91015,25.39355-19.91015,40.49463a43.61545,43.61545,0,0,0,12.69336,31.21923C76.98438,207.3208,89.40234,212,104,212c23.98047,0,44.37305-9.4668,58.97461-27.37744,12.74512-15.6333,20.05566-37.145,20.05566-59.01953,0-.1128-.001-.22559-.001-.33838,33.62988,13.48486,53.62207,36.96631,53.89746,37.2959a4.00015,4.00015,0,0,0,6.14648-5.1211ZM104,204c-27.89746,0-40.60449-19.05078-40.60449-36.75146C63.39551,142.56592,86.11621,116,136,116a124.37834,124.37834,0,0,1,38.97266,6.32617q.05712,1.63038.05761,3.27686C175.03027,177.07129,139.29785,204,104,204Z"></path>
+            </svg>
+            <svg class="highlight" viewBox="0 0 144.75738 77.18431" preserveAspectRatio="none">
+              <g transform="translate(-171.52826,-126.11624)">
+                <g fill="none" stroke-width="17" stroke-linecap="round" stroke-miterlimit="10">
+                  <path d="M180.02826,169.45123c0,0 12.65228,-25.55115 24.2441,-25.66863c6.39271,-0.06479 -5.89143,46.12943 4.90937,50.63857c10.22345,4.2681 24.14292,-52.38336 37.86455,-59.80493c3.31715,-1.79413 -5.35094,45.88889 -0.78872,58.34589c5.19371,14.18125 33.36934,-58.38221 36.43049,-56.91633c4.67078,2.23667 -0.06338,44.42744 5.22574,47.53647c6.04041,3.55065 19.87185,-20.77286 19.87185,-20.77286"></path>
+                </g>
+              </g>
+            </svg>
+            START WRITING
+          </a>
+        </div>
+      </div>
+      
+      <!-- Right Visual -->
+      <div class="relative">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 transform rotate-2 hover:rotate-0 transition-transform duration-500">
+          <!-- Mock notebook page -->
+          <div class="space-y-4">
+            <div class="border-b-2 border-amber-200 pb-4">
+              <h3 class="text-2xl font-bold text-amber-900 handwritten">Today's Tasks</h3>
+            </div>
+            
+            <!-- Mock task items with handwritten style -->
+            <div class="space-y-3">
+              {todayTasks.map((task) => (
+                <div class="flex items-center gap-3">
+                  {task.completed ? (
+                    <div class="w-5 h-5 bg-amber-600 rounded-full flex items-center justify-center">
+                      <span class="text-white text-xs">✓</span>
+                    </div>
+                  ) : (
+                    <div class="w-5 h-5 border-2 border-amber-600 rounded-full"></div>
+                  )}
+                  <span class={`handwritten text-lg ${task.completed ? 'text-amber-600 line-through opacity-70' : 'text-amber-800'}`}>
+                    {task.text}
+                  </span>
+                </div>
+              ))}
+              {todayTasks.length === 0 && (
+                <div class="text-center py-4">
+                  <span class="text-amber-600 handwritten text-lg">No tasks for today yet!</span>
+                </div>
+              )}
+            </div>
+            
+            <!-- Mock notes section -->
+            <div class="mt-8 pt-6 border-t-2 border-amber-200">
+              <h4 class="text-lg font-bold text-amber-900 handwritten mb-3">Quick Notes</h4>
+              <div class="bg-amber-50 p-4 rounded-lg">
+                <p class="text-amber-700 handwritten text-sm leading-relaxed">
+                  Remember to check the weather forecast for the weekend trip. Also, don't forget to pack the camera!
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Decorative elements -->
+        <div class="absolute -top-4 -right-4 w-8 h-8 bg-amber-300 rounded-full opacity-60"></div>
+        <div class="absolute -bottom-6 -left-6 w-12 h-12 bg-amber-200 rounded-full opacity-40"></div>
+      </div>
+    </div>
+    
+    <!-- Features section -->
+    <div class="mt-24 text-center">
+      <h2 class="text-3xl font-bold text-amber-900 mb-12 handwritten">Why Choose Our Approach?</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+        <div class="text-center p-6">
+          <h3 class="text-xl font-bold text-amber-900 mb-3 handwritten">Natural Writing</h3>
+          <p class="text-amber-700 handwritten leading-relaxed">
+            Feels like writing in your favorite notebook, but with digital convenience
+          </p>
+        </div>
+        
+        <div class="text-center p-6">
+          <h3 class="text-xl font-bold text-amber-900 mb-3 handwritten">Stay Focused</h3>
+          <p class="text-amber-700 handwritten leading-relaxed">
+            Clean, distraction-free interface that keeps you in the flow
+          </p>
+        </div>
+        
+        <div class="text-center p-6">
+          <h3 class="text-xl font-bold text-amber-900 mb-3 handwritten">Always Available</h3>
+          <p class="text-amber-700 handwritten leading-relaxed">
+            Your tasks and notes sync seamlessly across all your devices
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Background decoration -->
+  <div class="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden">
+    <div class="absolute top-20 left-10 w-2 h-2 bg-amber-300 rounded-full opacity-30"></div>
+    <div class="absolute top-40 right-20 w-3 h-3 bg-amber-400 rounded-full opacity-20"></div>
+    <div class="absolute bottom-32 left-1/4 w-2 h-2 bg-amber-300 rounded-full opacity-25"></div>
+    <div class="absolute bottom-20 right-1/3 w-4 h-4 bg-amber-200 rounded-full opacity-15"></div>
+  </div>
+
+  <!-- SVG Filters for handwritten effect -->
+  <svg height="0" width="0">
+    <filter id="handDrawnNoise">
+      <feTurbulence result="noise" numOctaves="8" baseFrequency="0.1" type="fractalNoise"></feTurbulence>
+      <feDisplacementMap yChannelSelector="G" xChannelSelector="R" scale="3" in2="noise" in="SourceGraphic"></feDisplacementMap>
+    </filter>
+    <filter id="handDrawnNoise2">
+      <feTurbulence result="noise" numOctaves="8" baseFrequency="0.1" seed="1010" type="fractalNoise"></feTurbulence>
+      <feDisplacementMap yChannelSelector="G" xChannelSelector="R" scale="3" in2="noise" in="SourceGraphic"></feDisplacementMap>
+    </filter>
+    <filter id="handDrawnNoiset">
+      <feTurbulence result="noise" numOctaves="8" baseFrequency="0.1" type="fractalNoise"></feTurbulence>
+      <feDisplacementMap yChannelSelector="G" xChannelSelector="R" scale="6" in2="noise" in="SourceGraphic"></feDisplacementMap>
+    </filter>
+    <filter id="handDrawnNoiset2">
+      <feTurbulence result="noise" numOctaves="8" baseFrequency="0.1" seed="1010" type="fractalNoise"></feTurbulence>
+      <feDisplacementMap yChannelSelector="G" xChannelSelector="R" scale="6" in2="noise" in="SourceGraphic"></feDisplacementMap>
+    </filter>
+  </svg>
+</section>

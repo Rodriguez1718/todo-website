@@ -1,0 +1,828 @@
+---
+// Todo List section with handwritten notebook style
+---
+
+<section class="bg-amber-50 py-16 px-4">
+  <div class="max-w-4xl mx-auto">
+    <div class="text-center mb-12">
+      <h2 class="text-4xl font-bold text-amber-900 mb-4 handwritten">
+        Your Tasks
+      </h2>
+      <p class="text-amber-700 text-lg handwritten">
+        Add, organize, and complete your daily tasks
+      </p>
+    </div>
+
+    <!-- Add new task form -->
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-8 border border-amber-200">
+      <div class="space-y-4">
+        <div class="flex gap-4">
+          <input 
+            type="text" 
+            id="new-task" 
+            placeholder="What needs to be done?" 
+            class="flex-1 px-4 py-3 border border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-amber-900 handwritten"
+          />
+          <button 
+            id="add-task-btn"
+            class="bg-amber-600 hover:bg-amber-700 text-cream px-6 py-3 rounded-lg font-bold transition-colors handwritten"
+          >
+            Add Task
+          </button>
+        </div>
+        
+        <!-- Date selection -->
+        <div class="flex gap-2">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input 
+              type="radio" 
+              name="task-date" 
+              value="today" 
+              checked
+              class="text-amber-600 focus:ring-amber-500"
+            />
+            <span class="text-amber-900 handwritten">Today</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input 
+              type="radio" 
+              name="task-date" 
+              value="tomorrow" 
+              class="text-amber-600 focus:ring-amber-500"
+            />
+            <span class="text-amber-900 handwritten">Tomorrow</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Original Uiverse Notebook Style Tasks -->
+    <div class="bg-white rounded-lg shadow-lg p-6 border border-amber-200 mb-8">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-xl font-bold text-amber-900 handwritten">Your Tasks</h3>
+        <button 
+          id="toggle-uiverse-completed-btn"
+          class="text-sm text-amber-600 hover:text-amber-800 handwritten transition-colors"
+        >
+          Hide Completed
+        </button>
+      </div>
+      
+      <!-- Today's Tasks -->
+      <div class="mb-8">
+        <h4 class="text-lg font-bold text-amber-900 handwritten mb-4 flex items-center gap-2">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" class="sketchy-icon">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="#92400e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <polyline points="9,22 9,12 15,12 15,22" stroke="#92400e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Today
+        </h4>
+        <div id="today-tasks-list">
+          <!-- Today's tasks will be loaded here -->
+        </div>
+        <div id="today-empty-state" class="text-center py-6 text-amber-600 handwritten hidden">
+          <svg width="40" height="40" viewBox="0 0 100 100" class="mx-auto mb-2 sketchy-empty">
+            <circle cx="50" cy="50" r="30" stroke="#92400e" stroke-width="3" fill="none" stroke-dasharray="2,3"/>
+            <path d="M35 45 L45 55 L65 35" stroke="#92400e" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.3"/>
+          </svg>
+          No tasks for today
+        </div>
+      </div>
+
+      <!-- Tomorrow's Tasks -->
+      <div class="mb-6">
+        <h4 class="text-lg font-bold text-amber-900 handwritten mb-4 flex items-center gap-2">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" class="sketchy-icon">
+            <circle cx="12" cy="12" r="10" stroke="#92400e" stroke-width="2" stroke-linecap="round" fill="none"/>
+            <polyline points="12,6 12,12 16,14" stroke="#92400e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Tomorrow
+        </h4>
+        <div id="tomorrow-tasks-list">
+          <!-- Tomorrow's tasks will be loaded here -->
+        </div>
+        <div id="tomorrow-empty-state" class="text-center py-6 text-amber-600 handwritten hidden">
+          <svg width="40" height="40" viewBox="0 0 100 100" class="mx-auto mb-2 sketchy-empty">
+            <circle cx="50" cy="50" r="30" stroke="#92400e" stroke-width="3" fill="none" stroke-dasharray="2,3"/>
+            <path d="M35 45 L45 55 L65 35" stroke="#92400e" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.3"/>
+          </svg>
+          No tasks for tomorrow
+        </div>
+      </div>
+
+      <!-- Empty state for all tasks -->
+      <div id="uiverse-empty-state" class="text-center py-12 hidden">
+        <svg width="80" height="80" viewBox="0 0 100 100" class="mx-auto mb-4 sketchy-empty-large">
+          <rect x="20" y="15" width="60" height="70" stroke="#92400e" stroke-width="3" fill="none" rx="5" stroke-dasharray="3,2"/>
+          <line x1="30" y1="30" x2="70" y2="30" stroke="#92400e" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+          <line x1="30" y1="40" x2="65" y2="40" stroke="#92400e" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+          <line x1="30" y1="50" x2="60" y2="50" stroke="#92400e" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+          <circle cx="25" cy="30" r="2" stroke="#92400e" stroke-width="2" fill="none" opacity="0.3"/>
+          <circle cx="25" cy="40" r="2" stroke="#92400e" stroke-width="2" fill="none" opacity="0.3"/>
+          <circle cx="25" cy="50" r="2" stroke="#92400e" stroke-width="2" fill="none" opacity="0.3"/>
+        </svg>
+        <p class="text-amber-700 text-lg handwritten">
+          No tasks yet. Add your first task above!
+        </p>
+      </div>
+
+      <!-- SVG filter for handwritten effect - Original Uiverse -->
+      <svg height="0" width="0">
+        <filter id="handDrawnNoiseUiverse">
+          <feTurbulence result="noise" numOctaves="8" baseFrequency="0.1" type="fractalNoise"></feTurbulence>
+          <feDisplacementMap yChannelSelector="G" xChannelSelector="R" scale="3" in2="noise" in="SourceGraphic"></feDisplacementMap>
+        </filter>
+      </svg>
+    </div>
+
+    <!-- Notes Section -->
+    <div class="bg-white rounded-lg shadow-lg p-6 border border-amber-200">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-2xl font-bold text-amber-900 handwritten">
+          Quick Notes
+        </h3>
+        <button 
+          id="add-note-btn"
+          class="bg-amber-600 hover:bg-amber-700 text-cream px-4 py-2 rounded-lg font-bold transition-colors text-sm handwritten"
+        >
+          + Add Note
+        </button>
+      </div>
+
+      <!-- Add note form (initially hidden) -->
+      <div id="note-form" class="mb-6 hidden">
+        <div class="space-y-4">
+          <input 
+            type="text" 
+            id="note-title" 
+            placeholder="Note title..." 
+            class="w-full px-4 py-2 border border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-amber-900 handwritten"
+          />
+          <textarea 
+            id="note-content" 
+            placeholder="Write your note here..." 
+            rows="4"
+            class="w-full px-4 py-2 border border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-amber-900 resize-none handwritten"
+          ></textarea>
+          <div class="flex gap-2">
+            <button 
+              id="save-note-btn"
+              class="bg-amber-600 hover:bg-amber-700 text-cream px-4 py-2 rounded-lg font-bold transition-colors handwritten"
+            >
+              Save Note
+            </button>
+            <button 
+              id="cancel-note-btn"
+              class="border border-amber-600 text-amber-700 hover:bg-amber-50 px-4 py-2 rounded-lg font-bold transition-colors handwritten"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notes list -->
+      <div id="notes-list" class="space-y-4">
+        <!-- Notes will be loaded from localStorage -->
+      </div>
+
+      <!-- Empty notes state -->
+      <div id="notes-empty-state" class="text-center py-12 hidden">
+        <svg width="80" height="80" viewBox="0 0 100 100" class="mx-auto mb-4 sketchy-empty-large">
+          <rect x="25" y="20" width="50" height="60" stroke="#92400e" stroke-width="3" fill="none" rx="3" stroke-dasharray="3,2"/>
+          <line x1="35" y1="35" x2="65" y2="35" stroke="#92400e" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+          <line x1="35" y1="45" x2="60" y2="45" stroke="#92400e" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+          <line x1="35" y1="55" x2="65" y2="55" stroke="#92400e" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+          <line x1="35" y1="65" x2="55" y2="65" stroke="#92400e" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+          <circle cx="30" cy="30" r="1.5" fill="#92400e" opacity="0.3"/>
+        </svg>
+        <p class="text-amber-700 text-lg handwritten">
+          No notes yet. Click "Add Note" to get started!
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SVG filter for handwritten effect -->
+  <svg height="0" width="0">
+    <filter id="handDrawnNoise">
+      <feTurbulence result="noise" numOctaves="8" baseFrequency="0.1" type="fractalNoise"></feTurbulence>
+      <feDisplacementMap yChannelSelector="G" xChannelSelector="R" scale="3" in2="noise" in="SourceGraphic"></feDisplacementMap>
+    </filter>
+  </svg>
+</section>
+
+<style>
+  /* Sketchy hand-drawn checkbox styles */
+  .sketchy-checkbox {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    font-family: "Kalam", cursive;
+    font-size: 1.2rem;
+    font-weight: 500;
+    padding-left: 2.5em;
+    margin-bottom: 0.75rem;
+    width: 100%;
+    filter: url(#handDrawnNoiseUiverse);
+  }
+
+  .sketchy-checkbox input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .sketchy-checkbox .sketchy-checkmark {
+    position: absolute;
+    left: 0;
+    top: 0.2em;
+    height: 1.5em;
+    width: 1.5em;
+    border: 3px solid #92400e;
+    border-radius: 8px;
+    background: transparent;
+    filter: url(#handDrawnNoiseUiverse);
+    transition: all 0.3s ease;
+    transform: rotate(-1deg);
+  }
+
+  .sketchy-checkbox:hover .sketchy-checkmark {
+    border-color: #78350f;
+    transform: rotate(0.5deg);
+  }
+
+  .sketchy-checkbox input:checked ~ .sketchy-checkmark {
+    background: #fef3c7;
+    border-color: #78350f;
+    transform: rotate(1deg);
+  }
+
+  .sketchy-checkbox .sketchy-checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+    left: 0.4em;
+    top: 0.1em;
+    width: 0.3em;
+    height: 0.7em;
+    border: solid #78350f;
+    border-width: 0 3px 3px 0;
+    transform: rotate(45deg) skew(-5deg, 2deg);
+    filter: url(#handDrawnNoiseUiverse);
+  }
+
+  .sketchy-checkbox input:checked ~ .sketchy-checkmark:after {
+    display: block;
+    animation: sketchy-check 0.4s ease-in-out;
+  }
+
+  @keyframes sketchy-check {
+    0% {
+      transform: rotate(45deg) skew(-5deg, 2deg) scale(0);
+      opacity: 0;
+    }
+    50% {
+      transform: rotate(45deg) skew(-3deg, 1deg) scale(1.2);
+      opacity: 0.8;
+    }
+    100% {
+      transform: rotate(45deg) skew(-5deg, 2deg) scale(1);
+      opacity: 1;
+    }
+  }
+
+  .sketchy-checkbox .sketchy-text {
+    position: relative;
+    z-index: 1;
+    transition: all 0.3s ease;
+    display: inline-block;
+    color: #92400e;
+    filter: url(#handDrawnNoiseUiverse);
+  }
+
+  .sketchy-checkbox input:checked ~ .sketchy-text {
+    color: #a3a3a3;
+    text-decoration: line-through;
+    text-decoration-color: #78350f;
+    text-decoration-thickness: 2px;
+    text-decoration-style: wavy;
+  }
+
+  .sketchy-task-container {
+    margin-bottom: 0.5rem;
+    transition: all 0.2s ease;
+  }
+
+  .sketchy-task-container:hover {
+    transform: translateX(2px);
+  }
+
+  .sketchy-task-container.completed {
+    opacity: 0.6;
+  }
+
+  /* More readable timestamp styling */
+  .note-timestamp {
+    filter: url(#handDrawnNoise);
+    font-weight: 400;
+    font-size: 0.8rem;
+    color: #92400e !important;
+    text-shadow: 0 0 1px rgba(146, 64, 14, 0.3);
+    letter-spacing: 0.025em;
+  }
+
+  .note-item {
+    transition: all 0.2s ease;
+  }
+
+  .note-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(146, 64, 14, 0.1);
+  }
+
+  .delete-note {
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+  }
+
+  .delete-note:hover {
+    opacity: 1;
+  }
+
+  /* Sketchy hand-drawn icon styles */
+  .sketchy-icon {
+    filter: url(#handDrawnNoiseUiverse);
+    animation: subtle-shake 3s infinite ease-in-out;
+  }
+
+  .sketchy-empty {
+    filter: url(#handDrawnNoiseUiverse);
+    animation: gentle-float 4s infinite ease-in-out;
+  }
+
+  .sketchy-empty-large {
+    filter: url(#handDrawnNoiseUiverse);
+    animation: gentle-float 5s infinite ease-in-out;
+  }
+
+  @keyframes subtle-shake {
+    0%, 100% { transform: rotate(0deg) translateX(0px); }
+    25% { transform: rotate(0.5deg) translateX(0.5px); }
+    50% { transform: rotate(-0.3deg) translateX(-0.3px); }
+    75% { transform: rotate(0.2deg) translateX(0.2px); }
+  }
+
+  @keyframes gentle-float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    25% { transform: translateY(-2px) rotate(0.5deg); }
+    50% { transform: translateY(-1px) rotate(-0.3deg); }
+    75% { transform: translateY(-3px) rotate(0.2deg); }
+  }
+</style>
+
+<script>
+  // Sample data (inline since imports don't work in client scripts)
+  const sampleTasks = [
+    {
+      id: "1647123456789",
+      text: "Buy groceries",
+      completed: false,
+      createdAt: "2026-03-18T10:30:00.000Z",
+      dueDate: "today"
+    },
+    {
+      id: "1647123456790",
+      text: "Plan weekend activities",
+      completed: false,
+      createdAt: "2026-03-18T09:15:00.000Z",
+      dueDate: "tomorrow"
+    },
+    {
+      id: "1647123456791",
+      text: "Finish project presentation",
+      completed: true,
+      createdAt: "2026-03-18T08:00:00.000Z",
+      dueDate: "today"
+    },
+    {
+      id: "1647123456792",
+      text: "Call dentist for appointment",
+      completed: false,
+      createdAt: "2026-03-18T07:45:00.000Z",
+      dueDate: "tomorrow"
+    }
+  ];
+
+  const sampleNotes = [
+    {
+      id: "1647123456793", 
+      title: "Meeting Notes",
+      content: "Discuss project timeline\nReview budget allocation\nAssign team responsibilities",
+      createdAt: "2026-03-17T10:30:00.000Z"
+    },
+    {
+      id: "1647123456794",
+      title: "Weekend Plans",
+      content: "Visit the farmer's market\nTry that new restaurant downtown\nFinish reading the book",
+      createdAt: "2026-03-17T09:20:00.000Z"
+    },
+    {
+      id: "1647123456795",
+      title: "Shopping List",
+      content: "Milk\nBread\nEggs\nApples\nChicken breast\nRice",
+      createdAt: "2026-03-17T08:10:00.000Z"
+    },
+    {
+      id: "1647123456796",
+      title: "Ideas for App",
+      content: "Add dark mode toggle\nImplement categories for tasks\nAdd due dates\nCreate export feature",
+      createdAt: "2026-03-17T07:30:00.000Z"
+    }
+  ];
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // Task elements
+    const addTaskBtn = document.getElementById('add-task-btn') as HTMLButtonElement;
+    const newTaskInput = document.getElementById('new-task') as HTMLInputElement;
+
+    // Uiverse task elements
+    const todayTasksList = document.getElementById('today-tasks-list') as HTMLElement;
+    const tomorrowTasksList = document.getElementById('tomorrow-tasks-list') as HTMLElement;
+    const todayEmptyState = document.getElementById('today-empty-state') as HTMLElement;
+    const tomorrowEmptyState = document.getElementById('tomorrow-empty-state') as HTMLElement;
+    const uiverseEmptyState = document.getElementById('uiverse-empty-state') as HTMLElement;
+    const toggleUiverseCompletedBtn = document.getElementById('toggle-uiverse-completed-btn') as HTMLButtonElement;
+
+    // Notes elements
+    const addNoteBtn = document.getElementById('add-note-btn') as HTMLButtonElement;
+    const noteForm = document.getElementById('note-form') as HTMLElement;
+    const noteTitleInput = document.getElementById('note-title') as HTMLInputElement;
+    const noteContentInput = document.getElementById('note-content') as HTMLTextAreaElement;
+    const saveNoteBtn = document.getElementById('save-note-btn') as HTMLButtonElement;
+    const cancelNoteBtn = document.getElementById('cancel-note-btn') as HTMLButtonElement;
+    const notesList = document.getElementById('notes-list') as HTMLElement;
+    const notesEmptyState = document.getElementById('notes-empty-state') as HTMLElement;
+
+    // State
+    let showUiverseCompleted = true;
+
+    // Check if required elements exist
+    if (!addTaskBtn || !newTaskInput) {
+      console.error('Required form elements not found');
+      return;
+    }
+
+    if (!todayTasksList || !tomorrowTasksList || !todayEmptyState || !tomorrowEmptyState || !uiverseEmptyState || !toggleUiverseCompletedBtn) {
+      console.error('Required Uiverse task DOM elements not found');
+      return;
+    }
+
+    if (!addNoteBtn || !noteForm || !noteTitleInput || !noteContentInput || !saveNoteBtn || !cancelNoteBtn || !notesList || !notesEmptyState) {
+      console.error('Required notes DOM elements not found');
+      return;
+    }
+
+    // Data management functions
+    async function getUiverseTasks() {
+      try {
+        const response = await fetch('/api/tasks.json?type=uiverse');
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Loaded tasks from server:', data);
+          return data;
+        }
+      } catch (error) {
+        console.error('Failed to load uiverse tasks from server:', error);
+      }
+      // Fallback to localStorage
+      const stored = localStorage.getItem('todolist_uiverse_tasks');
+      if (stored) {
+        console.log('Loaded tasks from localStorage:', JSON.parse(stored));
+        return JSON.parse(stored);
+      }
+      console.log('Using sample tasks as fallback');
+      return sampleTasks.slice();
+    }
+
+    async function saveUiverseTasks(tasks: any[]) {
+      try {
+        console.log('Saving tasks to server:', tasks);
+        const response = await fetch('/api/tasks.json', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ type: 'uiverse', data: tasks }),
+        });
+        if (!response.ok) {
+          throw new Error(`Failed to save to server: ${response.status}`);
+        }
+        console.log('Tasks saved successfully to server');
+      } catch (error) {
+        console.error('Failed to save uiverse tasks to server:', error);
+        // Fallback to localStorage
+        localStorage.setItem('todolist_uiverse_tasks', JSON.stringify(tasks));
+        console.log('Tasks saved to localStorage as fallback');
+      }
+    }
+
+    async function getNotes() {
+      try {
+        const response = await fetch('/api/tasks.json?type=notes');
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Loaded notes from server:', data);
+          return data;
+        }
+      } catch (error) {
+        console.error('Failed to load notes from server:', error);
+      }
+      // Fallback to localStorage
+      const stored = localStorage.getItem('todolist_notes');
+      if (stored) {
+        console.log('Loaded notes from localStorage:', JSON.parse(stored));
+        return JSON.parse(stored);
+      }
+      console.log('Using sample notes as fallback');
+      return sampleNotes;
+    }
+
+    async function saveNotes(notes: any[]) {
+      try {
+        console.log('Saving notes to server:', notes);
+        const response = await fetch('/api/tasks.json', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ type: 'notes', data: notes }),
+        });
+        if (!response.ok) {
+          throw new Error(`Failed to save to server: ${response.status}`);
+        }
+        console.log('Notes saved successfully to server');
+      } catch (error) {
+        console.error('Failed to save notes to server:', error);
+        // Fallback to localStorage
+        localStorage.setItem('todolist_notes', JSON.stringify(notes));
+        console.log('Notes saved to localStorage as fallback');
+      }
+    }
+
+    function formatDate(dateString: string) {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+      
+      if (diffInMinutes < 1) return 'Just now';
+      if (diffInMinutes < 60) return `${diffInMinutes} minutes ago`;
+      if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)} hours ago`;
+      if (diffInMinutes < 10080) return `${Math.floor(diffInMinutes / 1440)} days ago`;
+      
+      return date.toLocaleDateString();
+    }
+
+    function createUiverseTaskElement(task: any): HTMLElement {
+      const container = document.createElement('div');
+      container.className = `sketchy-task-container ${task.completed ? 'completed' : 'active'}`;
+      container.dataset.taskId = task.id;
+      
+      // New sketchy checkbox design
+      container.innerHTML = `
+        <label class="sketchy-checkbox">
+          <input type="checkbox" ${task.completed ? 'checked' : ''} />
+          <span class="sketchy-checkmark"></span>
+          <span class="sketchy-text">${task.text}</span>
+        </label>
+      `;
+
+      // Add change event listener for checkbox
+      const checkbox = container.querySelector('input[type="checkbox"]') as HTMLInputElement;
+      checkbox.addEventListener('change', async () => {
+        const tasks = await getUiverseTasks();
+        const taskIndex = tasks.findIndex((t: any) => t.id === task.id);
+        if (taskIndex !== -1) {
+          tasks[taskIndex].completed = checkbox.checked;
+          tasks[taskIndex].completedAt = checkbox.checked ? new Date().toISOString() : null;
+          await saveUiverseTasks(tasks);
+          
+          // Update the container class
+          container.className = `sketchy-task-container ${checkbox.checked ? 'completed' : 'active'}`;
+          
+          // Refresh the display
+          loadUiverseTasks();
+        }
+      });
+      
+      return container;
+    }
+
+    function createNoteElement(note: any): HTMLElement {
+      const noteDiv = document.createElement('div');
+      noteDiv.className = 'note-item border border-amber-200 rounded-lg p-4 bg-amber-25';
+      noteDiv.dataset.noteId = note.id;
+      
+      const formattedDate = formatDate(note.createdAt);
+      const formattedContent = note.content.replace(/\n/g, '<br>');
+      
+      noteDiv.innerHTML = `
+        <div class="flex justify-between items-start mb-2">
+          <h4 class="font-bold text-amber-900 handwritten">
+            ${note.title}
+          </h4>
+          <button class="delete-note text-amber-600 hover:text-amber-800 text-sm">✕</button>
+        </div>
+        <p class="text-amber-700 handwritten whitespace-pre-line">
+          ${formattedContent}
+        </p>
+        <div class="text-xs text-amber-600 mt-2">
+          <span class="note-timestamp">${formattedDate}</span>
+        </div>
+      `;
+
+      // Add delete functionality
+      const deleteBtn = noteDiv.querySelector('.delete-note') as HTMLButtonElement;
+      deleteBtn.addEventListener('click', async () => {
+        const notes = await getNotes();
+        const filteredNotes = notes.filter((n: any) => n.id !== note.id);
+        await saveNotes(filteredNotes);
+        noteDiv.remove();
+        checkNotesEmpty();
+      });
+      
+      return noteDiv;
+    }
+
+    async function loadUiverseTasks(): Promise<void> {
+      const tasks = await getUiverseTasks();
+      todayTasksList.innerHTML = '';
+      tomorrowTasksList.innerHTML = '';
+      
+      // Filter tasks based on showUiverseCompleted state
+      const filteredTasks = showUiverseCompleted ? tasks : tasks.filter((task: any) => !task.completed);
+      
+      // Separate tasks by date
+      const todayTasks = filteredTasks.filter((task: any) => task.dueDate === 'today');
+      const tomorrowTasks = filteredTasks.filter((task: any) => task.dueDate === 'tomorrow');
+      
+      // Load today's tasks
+      todayTasks.forEach((task: any) => {
+        const taskElement = createUiverseTaskElement(task);
+        todayTasksList.appendChild(taskElement);
+      });
+      
+      // Load tomorrow's tasks
+      tomorrowTasks.forEach((task: any) => {
+        const taskElement = createUiverseTaskElement(task);
+        tomorrowTasksList.appendChild(taskElement);
+      });
+      
+      checkUiverseEmpty();
+    }
+
+    async function loadNotes(): Promise<void> {
+      const notes = await getNotes();
+      notesList.innerHTML = '';
+      
+      notes.forEach((note: any) => {
+        const noteElement = createNoteElement(note);
+        notesList.appendChild(noteElement);
+      });
+      
+      checkNotesEmpty();
+    }
+
+    async function addTask(): Promise<void> {
+      const taskText = newTaskInput.value.trim();
+      const selectedDate = document.querySelector('input[name="task-date"]:checked') as HTMLInputElement;
+      
+      if (taskText && selectedDate) {
+        // Add to Uiverse section
+        const uiverseTasks = await getUiverseTasks();
+        
+        const newTask = {
+          id: Date.now().toString(),
+          text: taskText,
+          completed: false,
+          createdAt: new Date().toISOString(),
+          completedAt: null,
+          dueDate: selectedDate.value
+        };
+        
+        uiverseTasks.push(newTask);
+        await saveUiverseTasks(uiverseTasks);
+        
+        newTaskInput.value = '';
+        // Reset to "Today" as default
+        const todayRadio = document.querySelector('input[name="task-date"][value="today"]') as HTMLInputElement;
+        if (todayRadio) todayRadio.checked = true;
+        
+        loadUiverseTasks();
+      }
+    }
+
+    function checkUiverseEmpty(): void {
+      const todayTasks = todayTasksList.querySelectorAll('.sketchy-task-container');
+      const tomorrowTasks = tomorrowTasksList.querySelectorAll('.sketchy-task-container');
+      
+      // Show/hide individual empty states
+      if (todayTasks.length === 0) {
+        todayEmptyState.classList.remove('hidden');
+      } else {
+        todayEmptyState.classList.add('hidden');
+      }
+      
+      if (tomorrowTasks.length === 0) {
+        tomorrowEmptyState.classList.remove('hidden');
+      } else {
+        tomorrowEmptyState.classList.add('hidden');
+      }
+      
+      // Show overall empty state only if both sections are empty
+      if (todayTasks.length === 0 && tomorrowTasks.length === 0) {
+        uiverseEmptyState.classList.remove('hidden');
+      } else {
+        uiverseEmptyState.classList.add('hidden');
+      }
+    }
+
+    function toggleUiverseCompletedTasks(): void {
+      showUiverseCompleted = !showUiverseCompleted;
+      toggleUiverseCompletedBtn.textContent = showUiverseCompleted ? 'Hide Completed' : 'Show Completed';
+      loadUiverseTasks();
+    }
+
+    function showNoteForm(): void {
+      noteForm.classList.remove('hidden');
+      addNoteBtn.style.display = 'none';
+      noteTitleInput.focus();
+    }
+
+    function hideNoteForm(): void {
+      noteForm.classList.add('hidden');
+      addNoteBtn.style.display = 'block';
+      noteTitleInput.value = '';
+      noteContentInput.value = '';
+    }
+
+    async function saveNote(): Promise<void> {
+      const title = noteTitleInput.value.trim();
+      const content = noteContentInput.value.trim();
+      
+      if (title && content) {
+        const notes = await getNotes();
+        const newNote = {
+          id: Date.now().toString(),
+          title: title,
+          content: content,
+          createdAt: new Date().toISOString()
+        };
+        notes.unshift(newNote);
+        await saveNotes(notes);
+        
+        const noteElement = createNoteElement(newNote);
+        notesList.insertBefore(noteElement, notesList.firstChild);
+        hideNoteForm();
+        checkNotesEmpty();
+      }
+    }
+
+    function checkNotesEmpty(): void {
+      const notes = notesList.querySelectorAll('.note-item');
+      if (notes.length === 0) {
+        notesEmptyState.classList.remove('hidden');
+      } else {
+        notesEmptyState.classList.add('hidden');
+      }
+    }
+
+    // Event listeners
+    addTaskBtn.addEventListener('click', addTask);
+    toggleUiverseCompletedBtn.addEventListener('click', toggleUiverseCompletedTasks);
+    
+    newTaskInput.addEventListener('keypress', function(e: KeyboardEvent) {
+      if (e.key === 'Enter') {
+        addTask();
+      }
+    });
+
+    // Notes event listeners
+    addNoteBtn.addEventListener('click', showNoteForm);
+    cancelNoteBtn.addEventListener('click', hideNoteForm);
+    saveNoteBtn.addEventListener('click', saveNote);
+
+    // Save note on Ctrl+Enter
+    noteContentInput.addEventListener('keypress', function(e: KeyboardEvent) {
+      if (e.key === 'Enter' && e.ctrlKey) {
+        saveNote();
+      }
+    });
+
+    // Load data on page load
+    loadUiverseTasks();
+    loadNotes();
+  });
+</script>
