@@ -334,9 +334,17 @@ const fallbackTasks: Task[] = [
     
     try {
       const allTasks = JSON.parse(stored);
-      const todayTasks = allTasks
-        .filter(function(task: any) { return task.dueDate === 'today'; })
-        .slice(0, 4); // Limit to 4 tasks for display
+      const allTodayTasks = allTasks.filter(function(task: any) { return task.dueDate === 'today'; });
+
+      const uncompletedTasks = allTodayTasks.filter(function(task: any) { return !task.completed; });
+      const completedTasks = allTodayTasks.filter(function(task: any) { return task.completed; });
+
+      // Fill up to 4 slots: uncompleted first, then completed for remaining spots
+      const slotsForCompleted = Math.max(0, 4 - uncompletedTasks.length);
+      const todayTasks = [
+        ...uncompletedTasks,
+        ...completedTasks.slice(0, slotsForCompleted)
+      ].slice(0, 4);
       
       if (todayTasks.length > 0) {
         // Clear existing content and add real tasks
@@ -368,10 +376,14 @@ const fallbackTasks: Task[] = [
   }
   
   // Load tasks when the page loads
-  document.addEventListener('DOMContentLoaded', loadHeroTasks);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadHeroTasks);
+  } else {
+    loadHeroTasks();
+  }
   
   // Also listen for storage changes to update hero when tasks change
-  window.addEventListener('storage', function(e) {
+  window.addEventListener('storage', function(e: StorageEvent) {
     if (e.key === 'todolist_uiverse_tasks') {
       loadHeroTasks();
     }
