@@ -1,5 +1,5 @@
-@import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Kalam:wght@300;400;700&display=swap');
+@import "tailwindcss";
 
 /* Global handwritten font styles with hierarchy */
 body {
@@ -111,4 +111,173 @@ a {
 .handwritten {
   font-family: 'Kalam', cursive;
   filter: url(#handDrawnNoise);
+}
+
+/* Sketchy hand-drawn checkbox styles */
+.sketchy-checkbox {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  font-family: "Kalam", cursive;
+  font-size: 1.2rem;
+  font-weight: 500;
+  padding-left: 2.5em;
+  margin-bottom: 0.75rem;
+  width: 100%;
+  filter: url(#handDrawnNoiseUiverse);
+}
+
+.sketchy-checkbox input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.sketchy-checkbox .sketchy-checkmark {
+  position: absolute;
+  left: 0;
+  top: 0.2em;
+  height: 1.5em;
+  width: 1.5em;
+  border: 3px solid #92400e;
+  border-radius: 8px;
+  background: transparent;
+  filter: url(#handDrawnNoiseUiverse);
+  transition: all 0.3s ease;
+  transform: rotate(-1deg);
+}
+
+.sketchy-checkbox:hover .sketchy-checkmark {
+  border-color: #78350f;
+  transform: rotate(0.5deg);
+}
+
+.sketchy-checkbox input:checked ~ .sketchy-checkmark {
+  background: #fef3c7;
+  border-color: #78350f;
+  transform: rotate(1deg);
+}
+
+.sketchy-checkbox .sketchy-checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+  left: 0.4em;
+  top: 0.1em;
+  width: 0.3em;
+  height: 0.7em;
+  border: solid #78350f;
+  border-width: 0 3px 3px 0;
+  transform: rotate(45deg) skew(-5deg, 2deg);
+  filter: url(#handDrawnNoiseUiverse);
+}
+
+.sketchy-checkbox input:checked ~ .sketchy-checkmark:after {
+  display: block;
+  animation: sketchy-check 0.4s ease-in-out;
+}
+
+@keyframes sketchy-check {
+  0% {
+    transform: rotate(45deg) skew(-5deg, 2deg) scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: rotate(45deg) skew(-3deg, 1deg) scale(1.2);
+    opacity: 0.8;
+  }
+  100% {
+    transform: rotate(45deg) skew(-5deg, 2deg) scale(1);
+    opacity: 1;
+  }
+}
+
+.sketchy-checkbox .sketchy-text {
+  position: relative;
+  z-index: 1;
+  transition: all 0.3s ease;
+  display: inline-block;
+  color: #92400e;
+  filter: url(#handDrawnNoiseUiverse);
+}
+
+.sketchy-checkbox input:checked ~ .sketchy-text {
+  color: #a3a3a3;
+  text-decoration: line-through;
+  text-decoration-color: #78350f;
+  text-decoration-thickness: 2px;
+  text-decoration-style: wavy;
+}
+
+.sketchy-task-container {
+  margin-bottom: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.sketchy-task-container:hover {
+  transform: translateX(2px);
+}
+
+.sketchy-task-container.completed {
+  opacity: 0.6;
+}
+
+/* More readable timestamp styling */
+.note-timestamp {
+  filter: url(#handDrawnNoise);
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: #92400e !important;
+  text-shadow: 0 0 1px rgba(146, 64, 14, 0.3);
+  letter-spacing: 0.025em;
+}
+
+.note-item {
+  transition: all 0.2s ease;
+}
+
+.note-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(146, 64, 14, 0.1);
+}
+
+.delete-note {
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.delete-note:hover {
+  opacity: 1;
+}
+
+/* Sketchy hand-drawn icon styles */
+.sketchy-icon {
+  filter: url(#handDrawnNoiseUiverse);
+  animation: subtle-shake 3s infinite ease-in-out;
+}
+
+.sketchy-empty {
+  filter: url(#handDrawnNoiseUiverse);
+  animation: gentle-float 4s infinite ease-in-out;
+}
+
+.sketchy-empty-large {
+  filter: url(#handDrawnNoiseUiverse);
+  animation: gentle-float 5s infinite ease-in-out;
+}
+
+@keyframes subtle-shake {
+  0%, 100% { transform: rotate(0deg) translateX(0px); }
+  25% { transform: rotate(0.5deg) translateX(0.5px); }
+  50% { transform: rotate(-0.3deg) translateX(-0.3px); }
+  75% { transform: rotate(0.2deg) translateX(0.2px); }
+}
+
+@keyframes gentle-float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  25% { transform: translateY(-2px) rotate(0.5deg); }
+  50% { transform: translateY(-1px) rotate(-0.3deg); }
+  75% { transform: translateY(-3px) rotate(0.2deg); }
 }

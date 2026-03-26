@@ -1,6 +1,6 @@
 ---
 // Hero section for to-do list website
-// Fetch today's tasks for the mockup display
+// Display today's tasks dynamically
 
 // Define the task type
 interface Task {
@@ -10,26 +10,13 @@ interface Task {
   dueDate?: string;
 }
 
-let todayTasks: Task[] = [];
-try {
-  const response = await fetch(`${Astro.url.origin}/api/tasks.json?type=uiverse`);
-  if (response.ok) {
-    const allTasks = await response.json();
-    // Filter for today's tasks and limit to 4
-    todayTasks = allTasks
-      .filter((task: Task) => task.dueDate === 'today')
-      .slice(0, 4);
-  }
-} catch (error) {
-  console.error('Failed to fetch tasks for hero display:', error);
-  // Fallback to sample data
-  todayTasks = [
-    { id: '1', text: 'Review project proposal', completed: false },
-    { id: '2', text: 'Call team meeting', completed: true },
-    { id: '3', text: 'Finish design mockups', completed: false },
-    { id: '4', text: 'Plan weekend trip', completed: false }
-  ];
-}
+// Fallback sample data for initial display
+const fallbackTasks: Task[] = [
+  { id: '1', text: 'Review project proposal', completed: false },
+  { id: '2', text: 'Call team meeting', completed: true },
+  { id: '3', text: 'Finish design mockups', completed: false },
+  { id: '4', text: 'Plan weekend trip', completed: false }
+];
 ---
 
 <style>
@@ -243,8 +230,8 @@ try {
             </div>
             
             <!-- Mock task items with handwritten style -->
-            <div class="space-y-3">
-              {todayTasks.map((task) => (
+            <div class="space-y-3" id="hero-tasks-list">
+              {fallbackTasks.map((task) => (
                 <div class="flex items-center gap-3">
                   {task.completed ? (
                     <div class="w-5 h-5 bg-amber-600 rounded-full flex items-center justify-center">
@@ -258,11 +245,6 @@ try {
                   </span>
                 </div>
               ))}
-              {todayTasks.length === 0 && (
-                <div class="text-center py-4">
-                  <span class="text-amber-600 handwritten text-lg">No tasks for today yet!</span>
-                </div>
-              )}
             </div>
             
             <!-- Mock notes section -->
@@ -339,3 +321,62 @@ try {
     </filter>
   </svg>
 </section>
+
+<script>
+  // Load today's tasks dynamically in the hero section
+  function loadHeroTasks() {
+    const heroTasksList = document.getElementById('hero-tasks-list');
+    if (!heroTasksList) return;
+    
+    // Get tasks from localStorage
+    const stored = localStorage.getItem('todolist_uiverse_tasks');
+    if (!stored) return;
+    
+    try {
+      const allTasks = JSON.parse(stored);
+      const todayTasks = allTasks
+        .filter(function(task: any) { return task.dueDate === 'today'; })
+        .slice(0, 4); // Limit to 4 tasks for display
+      
+      if (todayTasks.length > 0) {
+        // Clear existing content and add real tasks
+        heroTasksList.innerHTML = '';
+        
+        todayTasks.forEach(function(task: any) {
+          const taskElement = document.createElement('div');
+          taskElement.className = 'flex items-center gap-3';
+          
+          const checkbox = task.completed 
+            ? '<div class="w-5 h-5 bg-amber-600 rounded-full flex items-center justify-center"><span class="text-white text-xs">✓</span></div>'
+            : '<div class="w-5 h-5 border-2 border-amber-600 rounded-full"></div>';
+          
+          const textClass = task.completed 
+            ? 'handwritten text-lg text-amber-600 line-through opacity-70'
+            : 'handwritten text-lg text-amber-800';
+          
+          taskElement.innerHTML = `
+            ${checkbox}
+            <span class="${textClass}">${task.text}</span>
+          `;
+          
+          heroTasksList.appendChild(taskElement);
+        });
+      }
+    } catch (error) {
+      console.error('Error loading hero tasks:', error);
+    }
+  }
+  
+  // Load tasks when the page loads
+  document.addEventListener('DOMContentLoaded', loadHeroTasks);
+  
+  // Also listen for storage changes to update hero when tasks change
+  window.addEventListener('storage', function(e) {
+    if (e.key === 'todolist_uiverse_tasks') {
+      loadHeroTasks();
+    }
+  });
+  
+  // Listen for custom events from the main script when tasks are updated
+  document.addEventListener('tasksUpdated', loadHeroTasks);
+</script>
