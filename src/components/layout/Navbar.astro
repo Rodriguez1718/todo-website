@@ -1,19 +1,154 @@
 ---
 // Navbar component for to-do list website
+import CheckIcon from '../icons/CheckIcon.astro';
+
+const currentPath = new URL(Astro.url).pathname;
 ---
 
-<nav class="bg-amber-50 border-b border-amber-200 py-3 sticky top-0 z-50">
-  <div class="max-w-6xl mx-auto px-4 flex justify-between items-center md:px-2">
+<nav class="navbar-glass sticky top-0 z-50 border-b border-amber-200/30">
+  <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
     <div class="nav-brand">
-      <a href="/" class="flex items-center no-underline text-amber-900 font-bold text-2xl handwritten">
-        <span class="bg-amber-600 text-cream w-8 h-8 rounded-lg flex items-center justify-center mr-2 font-bold handwritten">✓</span>
-        <span class="hidden sm:inline">TodoList</span>
+      <a href="/" class="flex items-center gap-3 text-amber-900 font-bold text-2xl handwritten group" aria-label="TodoList Home">
+        <span class="logo-badge">
+          <CheckIcon width={18} height={18} ariaHidden={true} class="text-white" />
+        </span>
+        <span class="logo-text">TodoList</span>
       </a>
     </div>
     
-    <div class="flex gap-8 md:gap-4">
-      <a href="/" class="no-underline text-amber-700 font-normal hover:text-amber-900 transition-colors handwritten">Home</a>
-      <a href="/tasks" class="no-underline text-amber-700 font-normal hover:text-amber-900 transition-colors handwritten">My Tasks</a>
+    <div class="flex gap-2">
+      <a href="/" 
+        class={`nav-link ${currentPath === '/' ? 'nav-link-active' : ''}`}
+        aria-current={currentPath === '/' ? 'page' : undefined}>
+        Home
+      </a>
+      <a href="/tasks"
+        class={`nav-link ${currentPath === '/tasks' ? 'nav-link-active' : ''}`}
+        aria-current={currentPath === '/tasks' ? 'page' : undefined}>
+        My Tasks
+      </a>
     </div>
   </div>
 </nav>
+
+<style>
+  .navbar-glass {
+    background: rgba(254, 243, 199, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 
+      0 1px 3px rgba(0, 0, 0, 0.05),
+      0 1px 2px rgba(217, 119, 6, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .navbar-glass.scrolled {
+    background: rgba(254, 243, 199, 0.95);
+    box-shadow: 
+      0 4px 6px -1px rgba(0, 0, 0, 0.1),
+      0 2px 4px -1px rgba(217, 119, 6, 0.15);
+  }
+  
+  .logo-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    background: linear-gradient(135deg, #d97706, #b45309);
+    border-radius: 0.75rem;
+    box-shadow: 
+      0 2px 4px rgba(217, 119, 6, 0.2),
+      inset 0 -2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .nav-brand a:hover .logo-badge {
+    transform: translateY(-2px) rotate(-5deg);
+    box-shadow: 
+      0 4px 8px rgba(217, 119, 6, 0.3),
+      inset 0 -2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .logo-text {
+    font-family: 'Kalam', cursive;
+    font-weight: 700;
+    background: linear-gradient(135deg, #92400e, #78350f);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    transition: all 0.2s ease;
+  }
+  
+  .nav-brand a:hover .logo-text {
+    transform: translateX(2px);
+  }
+  
+  .nav-link {
+    position: relative;
+    font-family: 'Kalam', cursive;
+    font-weight: 500;
+    font-size: 1rem;
+    color: #92400e;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+  }
+  
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0.25rem;
+    left: 1rem;
+    right: 1rem;
+    height: 2px;
+    background: linear-gradient(90deg, #d97706, #f59e0b);
+    border-radius: 2px;
+    transform: scaleX(0);
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .nav-link:hover {
+    color: #78350f;
+    background: rgba(217, 119, 6, 0.08);
+  }
+  
+  .nav-link:hover::after {
+    transform: scaleX(1);
+  }
+  
+  .nav-link-active {
+    color: #78350f;
+    font-weight: 700;
+    background: rgba(217, 119, 6, 0.12);
+  }
+  
+  .nav-link-active::after {
+    transform: scaleX(1);
+  }
+  
+  @media (max-width: 640px) {
+    .logo-text {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  // Add scroll effect to navbar
+  const navbar = document.querySelector('.navbar-glass');
+  let lastScroll = 0;
+  
+  window.addEventListener('scroll', () => {
+    const currentScroll = window.pageYOffset;
+    
+    if (currentScroll > 20) {
+      navbar?.classList.add('scrolled');
+    } else {
+      navbar?.classList.remove('scrolled');
+    }
+    
+    lastScroll = currentScroll;
+  });
+</script>

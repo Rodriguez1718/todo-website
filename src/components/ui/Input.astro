@@ -1,0 +1,39 @@
+---
+/**
+ * Input Component
+ * Variants: default, error, success
+ */
+interface Props {
+  type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url';
+  variant?: 'default' | 'error' | 'success';
+  placeholder?: string;
+  id?: string;
+  name?: string;
+  value?: string;
+  required?: boolean;
+  class?: string;
+}
+
+const {
+  type = 'text',
+  variant = 'default',
+  placeholder,
+  id,
+  name,
+  value,
+  required = false,
+  class: className = '',
+} = Astro.props;
+
+const variantClass = variant !== 'default' ? `input-${variant}` : '';
+---
+
+<input
+  type={type}
+  id={id}
+  name={name}
+  value={value}
+  placeholder={placeholder}
+  required={required}
+  class={`input ${variantClass} ${className}`}
+/>

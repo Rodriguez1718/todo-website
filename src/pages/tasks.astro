@@ -1,0 +1,11 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro"
+import TodoList from "../components/sections/TodoList.astro"
+
+const title = "My Tasks - TodoList App";
+const description = "View, manage, and organize your daily tasks. Create new tasks, mark them complete, and stay productive with TodoList.";
+---
+
+<BaseLayout title={title} description={description}>
+    <TodoList />
+</BaseLayout>

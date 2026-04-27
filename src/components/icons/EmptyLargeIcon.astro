@@ -1,0 +1,36 @@
+---
+/**
+ * Empty State Large Icon Component
+ */
+interface Props {
+  width?: number;
+  height?: number;
+  class?: string;
+  ariaHidden?: boolean;
+}
+
+const {
+  width = 80,
+  height = 80,
+  class: className = '',
+  ariaHidden = true,
+} = Astro.props;
+---
+
+<svg
+  {width}
+  {height}
+  viewBox="0 0 100 100"
+  fill="none"
+  class={`sketchy-empty-large ${className}`}
+  aria-hidden={ariaHidden}
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <rect x="20" y="15" width="60" height="70" stroke="currentColor" stroke-width="3" fill="none" rx="5" stroke-dasharray="3,2"/>
+  <line x1="30" y1="30" x2="70" y2="30" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+  <line x1="30" y1="40" x2="65" y2="40" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+  <line x1="30" y1="50" x2="60" y2="50" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+  <circle cx="25" cy="30" r="2" stroke="currentColor" stroke-width="2" fill="none" opacity="0.3"/>
+  <circle cx="25" cy="40" r="2" stroke="currentColor" stroke-width="2" fill="none" opacity="0.3"/>
+  <circle cx="25" cy="50" r="2" stroke="currentColor" stroke-width="2" fill="none" opacity="0.3"/>
+</svg>
