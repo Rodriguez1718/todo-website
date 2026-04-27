@@ -1,126 +1,338 @@
 ---
 // ToDo component with handwritten notebook style
 // Handle automatic task migration from tomorrow to today
+import HomeIcon from "../icons/HomeIcon.astro";
+import ClockIcon from "../icons/ClockIcon.astro";
+import EmptyIcon from "../icons/EmptyIcon.astro";
+import EmptyLargeIcon from "../icons/EmptyLargeIcon.astro";
 ---
 
 <!-- Add new task form -->
-<div class="bg-white rounded-lg shadow-lg p-6 mb-8 border border-amber-200">
-  <div class="space-y-4">
-    <div class="flex gap-4">
+<section aria-labelledby="add-task-heading" class="bg-white rounded-lg shadow-lg p-6 mb-8 border-2 border-amber-200 hover:border-amber-300 transition-all duration-300">
+  <h2 id="add-task-heading" class="sr-only">Add New Task</h2>
+  <form id="add-task-form" class="space-y-4" onsubmit="return false;">
+    <div class="flex gap-3">
+      <label for="new-task" class="sr-only">Task description</label>
       <input 
         type="text" 
         id="new-task" 
+        name="task-text"
         placeholder="What needs to be done?" 
-        class="flex-1 px-4 py-3 border border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-amber-900 handwritten"
+        aria-label="Task description"
+        aria-required="true"
+        class="flex-1 px-4 py-3 border-2 border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-amber-900 handwritten placeholder:text-amber-400 transition-all duration-200"
       />
       <button 
         id="add-task-btn"
-        class="bg-amber-600 hover:bg-amber-700 text-cream px-6 py-3 rounded-lg font-bold transition-colors handwritten"
+        type="submit"
+        aria-label="Add task"
+        class="bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white px-8 py-3 rounded-lg font-bold transition-all duration-200 handwritten shadow-md hover:shadow-lg transform hover:-translate-y-0.5 active:translate-y-0 whitespace-nowrap"
       >
         Add Task
       </button>
     </div>
     
-    <!-- Date selection -->
-    <div class="flex gap-2">
-      <label class="flex items-center gap-2 cursor-pointer">
-        <input 
-          type="radio" 
-          name="task-date" 
-          value="today" 
-          checked
-          class="text-amber-600 focus:ring-amber-500"
-        />
-        <span class="text-amber-900 handwritten">Today</span>
-      </label>
-      <label class="flex items-center gap-2 cursor-pointer">
-        <input 
-          type="radio" 
-          name="task-date" 
-          value="tomorrow" 
-          class="text-amber-600 focus:ring-amber-500"
-        />
-        <span class="text-amber-900 handwritten">Tomorrow</span>
-      </label>
+    <!-- Advanced options -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <!-- Date selection -->
+      <fieldset class="flex gap-3">
+        <legend class="sr-only">Select due date</legend>
+        <label class="flex items-center gap-2 cursor-pointer group">
+          <input 
+            type="radio" 
+            name="task-date" 
+            value="today" 
+            checked
+            aria-label="Due today"
+            class="w-4 h-4 text-amber-600 focus:ring-amber-500 focus:ring-2 cursor-pointer"
+          />
+          <span class="text-amber-900 handwritten group-hover:text-amber-700 transition-colors text-sm">Today</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer group">
+          <input 
+            type="radio" 
+            name="task-date" 
+            value="tomorrow" 
+            aria-label="Due tomorrow"
+            class="w-4 h-4 text-amber-600 focus:ring-amber-500 focus:ring-2 cursor-pointer"
+          />
+          <span class="text-amber-900 handwritten group-hover:text-amber-700 transition-colors text-sm">Tomorrow</span>
+        </label>
+      </fieldset>
+      
+      <!-- Priority selection -->
+      <div>
+        <label for="task-priority" class="sr-only">Priority</label>
+        <select 
+          id="task-priority" 
+          name="task-priority"
+          aria-label="Task priority"
+          class="w-full px-3 py-2 border-2 border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-amber-900 handwritten text-sm"
+        >
+          <option value="none">No Priority</option>
+          <option value="low">Low Priority</option>
+          <option value="medium">Medium Priority</option>
+          <option value="high">High Priority</option>
+        </select>
+      </div>
+      
+      <!-- Category selection -->
+      <div>
+        <label for="task-category" class="sr-only">Category</label>
+        <select 
+          id="task-category" 
+          name="task-category"
+          aria-label="Task category"
+          class="w-full px-3 py-2 border-2 border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-amber-900 handwritten text-sm"
+        >
+          <option value="">No Category</option>
+          <option value="work">Work</option>
+          <option value="personal">Personal</option>
+          <option value="shopping">Shopping</option>
+          <option value="health">Health</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+    </div>
+  </form>
+</section>
+
+<!-- Task Stats & Actions -->
+<div class="bg-gradient-to-r from-amber-50 to-amber-100 rounded-lg p-4 mb-6 border border-amber-200">
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <!-- Stats -->
+    <div class="flex gap-6">
+      <div class="text-center">
+        <div id="total-tasks-count" class="text-2xl font-bold text-amber-900 handwritten">0</div>
+        <div class="text-xs text-amber-700 handwritten">Total</div>
+      </div>
+      <div class="text-center">
+        <div id="active-tasks-count" class="text-2xl font-bold text-amber-900 handwritten">0</div>
+        <div class="text-xs text-amber-700 handwritten">Active</div>
+      </div>
+      <div class="text-center">
+        <div id="completed-tasks-count" class="text-2xl font-bold text-green-700 handwritten">0</div>
+        <div class="text-xs text-green-600 handwritten">Done</div>
+      </div>
+    </div>
+    
+    <!-- Search & Filter -->
+    <div class="flex gap-2 flex-1 max-w-md">
+      <input 
+        type="search" 
+        id="task-search" 
+        placeholder="Search tasks..."
+        aria-label="Search tasks"
+        class="flex-1 px-3 py-2 border-2 border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-amber-900 handwritten text-sm"
+      />
     </div>
   </div>
 </div>
 
 <!-- Original Uiverse Notebook Style Tasks -->
-<div class="bg-white rounded-lg shadow-lg p-6 border border-amber-200 mb-8">
-  <div class="flex justify-between items-center mb-6">
-    <h3 class="text-xl font-bold text-amber-900 handwritten">Your Tasks</h3>
-    <button 
-      id="toggle-uiverse-completed-btn"
-      class="text-sm text-amber-600 hover:text-amber-800 handwritten transition-colors"
-    >
-      Hide Completed
-    </button>
+<section aria-labelledby="tasks-heading" class="bg-white rounded-lg shadow-lg p-6 border-2 border-amber-200 mb-8 hover:shadow-xl transition-shadow duration-300">
+  <div class="flex flex-wrap justify-between items-center mb-6 pb-4 border-b-2 border-amber-100 gap-3">
+    <h2 id="tasks-heading" class="text-2xl font-bold text-amber-900 handwritten">Your Tasks</h2>
+    <div class="flex flex-wrap gap-2">
+      <button 
+        id="filter-all-btn"
+        type="button"
+        class="filter-btn active text-xs px-3 py-1.5 rounded-md handwritten transition-colors"
+        data-filter="all"
+      >
+        All
+      </button>
+      <button 
+        id="filter-high-btn"
+        type="button"
+        class="filter-btn text-xs px-3 py-1.5 rounded-md handwritten transition-colors"
+        data-filter="high"
+      >
+        High
+      </button>
+      <button 
+        id="filter-medium-btn"
+        type="button"
+        class="filter-btn text-xs px-3 py-1.5 rounded-md handwritten transition-colors"
+        data-filter="medium"
+      >
+        Medium
+      </button>
+      <button 
+        id="filter-low-btn"
+        type="button"
+        class="filter-btn text-xs px-3 py-1.5 rounded-md handwritten transition-colors"
+        data-filter="low"
+      >
+        Low
+      </button>
+      <div class="w-px h-6 bg-amber-200"></div>
+      <button 
+        id="toggle-reorder-btn"
+        type="button"
+        aria-label="Toggle reorder mode"
+        aria-pressed="false"
+        class="text-xs text-amber-600 hover:text-amber-800 handwritten transition-colors px-3 py-1.5 rounded-md hover:bg-amber-50"
+      >
+        Reorder
+      </button>
+    </div>
   </div>
   
   <!-- Today's Tasks -->
   <div class="mb-8">
-    <h4 class="text-lg font-bold text-amber-900 handwritten mb-4 flex items-center gap-2">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" class="sketchy-icon">
-        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="#92400e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-        <polyline points="9,22 9,12 15,12 15,22" stroke="#92400e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
+    <h3 id="today-tasks-heading" class="text-lg font-bold text-amber-900 handwritten mb-4 flex items-center gap-2">
+      <HomeIcon width={20} height={20} class="text-amber-700" ariaHidden={true} />
       Today
-    </h4>
-    <div id="today-tasks-list">
+    </h3>
+    <ul 
+      id="today-tasks-list" 
+      class="space-y-2"
+      role="list"
+      aria-labelledby="today-tasks-heading"
+      aria-live="polite"
+      aria-relevant="additions removals"
+    >
       <!-- Today's tasks will be loaded here -->
-    </div>
-    <div id="today-empty-state" class="text-center py-6 text-amber-600 handwritten hidden">
-      <svg width="40" height="40" viewBox="0 0 100 100" class="mx-auto mb-2 sketchy-empty">
-        <circle cx="50" cy="50" r="30" stroke="#92400e" stroke-width="3" fill="none" stroke-dasharray="2,3"/>
-        <path d="M35 45 L45 55 L65 35" stroke="#92400e" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.3"/>
-      </svg>
-      No tasks for today
+    </ul>
+    <div id="today-empty-state" class="text-center py-8 text-amber-600 handwritten hidden" role="status" aria-live="polite">
+      <EmptyIcon width={48} height={48} class="mx-auto mb-3 text-amber-500" ariaHidden={true} />
+      <p class="text-base">No tasks for today</p>
     </div>
   </div>
 
   <!-- Tomorrow's Tasks -->
   <div class="mb-6">
-    <h4 class="text-lg font-bold text-amber-900 handwritten mb-4 flex items-center gap-2">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" class="sketchy-icon">
-        <circle cx="12" cy="12" r="10" stroke="#92400e" stroke-width="2" stroke-linecap="round" fill="none"/>
-        <polyline points="12,6 12,12 16,14" stroke="#92400e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
+    <h3 id="tomorrow-tasks-heading" class="text-lg font-bold text-amber-900 handwritten mb-4 flex items-center gap-2">
+      <ClockIcon width={20} height={20} class="text-amber-700" ariaHidden={true} />
       Tomorrow
-    </h4>
-    <div id="tomorrow-tasks-list">
+    </h3>
+    <ul 
+      id="tomorrow-tasks-list" 
+      class="space-y-2"
+      role="list"
+      aria-labelledby="tomorrow-tasks-heading"
+      aria-live="polite"
+      aria-relevant="additions removals"
+    >
       <!-- Tomorrow's tasks will be loaded here -->
-    </div>
-    <div id="tomorrow-empty-state" class="text-center py-6 text-amber-600 handwritten hidden">
-      <svg width="40" height="40" viewBox="0 0 100 100" class="mx-auto mb-2 sketchy-empty">
-        <circle cx="50" cy="50" r="30" stroke="#92400e" stroke-width="3" fill="none" stroke-dasharray="2,3"/>
-        <path d="M35 45 L45 55 L65 35" stroke="#92400e" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.3"/>
-      </svg>
-      No tasks for tomorrow
+    </ul>
+    <div id="tomorrow-empty-state" class="text-center py-8 text-amber-600 handwritten hidden" role="status" aria-live="polite">
+      <EmptyIcon width={48} height={48} class="mx-auto mb-3 text-amber-500" ariaHidden={true} />
+      <p class="text-base">No tasks for tomorrow</p>
     </div>
   </div>
 
   <!-- Empty state for all tasks -->
-  <div id="uiverse-empty-state" class="text-center py-12 hidden">
-    <svg width="80" height="80" viewBox="0 0 100 100" class="mx-auto mb-4 sketchy-empty-large">
-      <rect x="20" y="15" width="60" height="70" stroke="#92400e" stroke-width="3" fill="none" rx="5" stroke-dasharray="3,2"/>
-      <line x1="30" y1="30" x2="70" y2="30" stroke="#92400e" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
-      <line x1="30" y1="40" x2="65" y2="40" stroke="#92400e" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
-      <line x1="30" y1="50" x2="60" y2="50" stroke="#92400e" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
-      <circle cx="25" cy="30" r="2" stroke="#92400e" stroke-width="2" fill="none" opacity="0.3"/>
-      <circle cx="25" cy="40" r="2" stroke="#92400e" stroke-width="2" fill="none" opacity="0.3"/>
-      <circle cx="25" cy="50" r="2" stroke="#92400e" stroke-width="2" fill="none" opacity="0.3"/>
-    </svg>
-    <p class="text-amber-700 text-lg handwritten">
+  <div id="uiverse-empty-state" class="text-center py-12 hidden" role="status" aria-live="polite">
+    <EmptyLargeIcon width={96} height={96} class="mx-auto mb-6 text-amber-500" ariaHidden={true} />
+    <p class="text-amber-700 text-xl handwritten">
       No tasks yet. Add your first task above!
     </p>
   </div>
 
   <!-- SVG filter for handwritten effect - Original Uiverse -->
-  <svg height="0" width="0">
+  <svg height="0" width="0" aria-hidden="true">
     <filter id="handDrawnNoiseUiverse">
       <feTurbulence result="noise" numOctaves="8" baseFrequency="0.1" type="fractalNoise"></feTurbulence>
       <feDisplacementMap yChannelSelector="G" xChannelSelector="R" scale="3" in2="noise" in="SourceGraphic"></feDisplacementMap>
     </filter>
   </svg>
+</section>
+
+<!-- Edit Task Modal -->
+<div id="edit-task-modal" class="modal-overlay hidden" role="dialog" aria-labelledby="edit-task-title" aria-modal="true">
+  <div class="modal">
+    <div class="flex justify-between items-center mb-4">
+      <h3 id="edit-task-title" class="text-xl font-bold text-amber-900 handwritten">Edit Task</h3>
+      <button id="close-edit-modal" type="button" aria-label="Close" class="text-amber-600 hover:text-amber-800 text-2xl leading-none">&times;</button>
+    </div>
+    
+    <form id="edit-task-form" class="space-y-4">
+      <div>
+        <label for="edit-task-text" class="block text-sm font-medium text-amber-900 handwritten mb-1">Task</label>
+        <input 
+          type="text" 
+          id="edit-task-text" 
+          class="w-full px-4 py-2 border-2 border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-amber-900 handwritten"
+          required
+        />
+      </div>
+      
+      <div>
+        <label for="edit-task-priority" class="block text-sm font-medium text-amber-900 handwritten mb-1">Priority</label>
+        <select 
+          id="edit-task-priority" 
+          class="w-full px-4 py-2 border-2 border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-amber-900 handwritten"
+        >
+          <option value="none">No Priority</option>
+          <option value="low">Low Priority</option>
+          <option value="medium">Medium Priority</option>
+          <option value="high">High Priority</option>
+        </select>
+      </div>
+      
+      <div>
+        <label for="edit-task-category" class="block text-sm font-medium text-amber-900 handwritten mb-1">Category</label>
+        <select 
+          id="edit-task-category" 
+          class="w-full px-4 py-2 border-2 border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-amber-900 handwritten"
+        >
+          <option value="">No Category</option>
+          <option value="work">Work</option>
+          <option value="personal">Personal</option>
+          <option value="shopping">Shopping</option>
+          <option value="health">Health</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      
+      <div class="flex gap-3 pt-2">
+        <button 
+          type="submit" 
+          class="flex-1 bg-amber-600 hover:bg-amber-700 text-white px-6 py-2 rounded-lg font-bold handwritten transition-colors"
+        >
+          Save Changes
+        </button>
+        <button 
+          type="button" 
+          id="cancel-edit-btn"
+          class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded-lg font-bold handwritten transition-colors"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Overdue Tasks Alert Modal -->
+<div id="overdue-alert-modal" class="modal-overlay hidden" role="dialog" aria-labelledby="overdue-alert-title" aria-modal="true">
+  <div class="modal max-w-lg">
+    <div class="flex items-start gap-3 mb-4">
+      <div class="flex-shrink-0 w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+      <div class="flex-1">
+        <h3 id="overdue-alert-title" class="text-xl font-bold text-amber-900 handwritten mb-2">Incomplete Tasks</h3>
+        <p class="text-amber-700 handwritten text-sm">These tasks from yesterday weren't completed and have been moved to tomorrow:</p>
+      </div>
+    </div>
+    
+    <div id="overdue-tasks-list" class="bg-amber-50 rounded-lg p-4 mb-4 max-h-64 overflow-y-auto">
+      <!-- Overdue tasks will be listed here -->
+    </div>
+    
+    <button 
+      id="close-overdue-alert"
+      type="button"
+      class="w-full bg-amber-600 hover:bg-amber-700 text-white px-6 py-3 rounded-lg font-bold handwritten transition-colors"
+    >
+      Got it!
+    </button>
+  </div>
 </div>

@@ -1,0 +1,19 @@
+---
+/**
+ * Badge Component
+ * Variants: success, warning, error, info
+ */
+interface Props {
+  variant?: 'success' | 'warning' | 'error' | 'info';
+  class?: string;
+}
+
+const {
+  variant = 'warning',
+  class: className = '',
+} = Astro.props;
+---
+
+<span class={`badge badge-${variant} ${className}`}>
+  <slot />
+</span>
