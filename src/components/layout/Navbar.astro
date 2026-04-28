@@ -16,7 +16,7 @@ const currentPath = new URL(Astro.url).pathname;
       </a>
     </div>
     
-    <div class="flex gap-2">
+    <div class="flex gap-2 items-center">
       <a href="/" 
         class={`nav-link ${currentPath === '/' ? 'nav-link-active' : ''}`}
         aria-current={currentPath === '/' ? 'page' : undefined}>
@@ -27,26 +27,44 @@ const currentPath = new URL(Astro.url).pathname;
         aria-current={currentPath === '/tasks' ? 'page' : undefined}>
         My Tasks
       </a>
+      <button 
+        id="shortcuts-help-btn"
+        type="button"
+        aria-label="Show keyboard shortcuts"
+        class="nav-icon-btn"
+        title="Keyboard shortcuts (?)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+          <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"></path>
+        </svg>
+      </button>
     </div>
   </div>
 </nav>
 
 <style>
   .navbar-glass {
-    background: rgba(254, 243, 199, 0.8);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    box-shadow: 
-      0 1px 3px rgba(0, 0, 0, 0.05),
-      0 1px 2px rgba(217, 119, 6, 0.1);
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: none;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-bottom: 1px solid transparent;
   }
   
   .navbar-glass.scrolled {
     background: rgba(254, 243, 199, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     box-shadow: 
       0 4px 6px -1px rgba(0, 0, 0, 0.1),
       0 2px 4px -1px rgba(217, 119, 6, 0.15);
+    border-bottom-color: rgba(217, 119, 6, 0.2);
+  }
+  
+  [data-theme="dark"] .navbar-glass.scrolled {
+    background: rgba(26, 26, 26, 0.95);
+    border-bottom-color: rgba(245, 158, 11, 0.2);
   }
   
   .logo-badge {
@@ -128,6 +146,26 @@ const currentPath = new URL(Astro.url).pathname;
     transform: scaleX(1);
   }
   
+  .nav-icon-btn {
+    display: flex;
+    align-items: center;
+    justify-center: center;
+    padding: 0.5rem;
+    background: transparent;
+    border: 2px solid transparent;
+    border-radius: 0.5rem;
+    color: #92400e;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .nav-icon-btn:hover {
+    background: rgba(217, 119, 6, 0.1);
+    border-color: rgba(217, 119, 6, 0.2);
+    color: #78350f;
+    transform: translateY(-1px);
+  }
+  
   @media (max-width: 640px) {
     .logo-text {
       display: none;
@@ -150,5 +188,10 @@ const currentPath = new URL(Astro.url).pathname;
     }
     
     lastScroll = currentScroll;
+  });
+  
+  // Shortcuts button
+  document.getElementById('shortcuts-help-btn')?.addEventListener('click', () => {
+    (window as any).showKeyboardShortcuts?.();
   });
 </script>

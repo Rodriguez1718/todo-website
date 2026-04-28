@@ -217,10 +217,159 @@ function getUiverseTasks() {
     return stored ? JSON.parse(stored) : sampleTasks.slice();
   }
 
-  function saveUiverseTasks(tasks) {
+  function saveUiverseTasks(tasks, skipHistory = false) {
+    // Capture current state BEFORE saving new state (for undo)
+    if (!skipHistory) {
+      const currentTasks = getUiverseTasks();
+      addToHistory(currentTasks);
+    }
+    
     localStorage.setItem('todolist_uiverse_tasks', JSON.stringify(tasks));
+    
     // Dispatch custom event to notify other components
     document.dispatchEvent(new CustomEvent('tasksUpdated'));
+  }
+  
+  // Undo/Redo History System
+  const historyStack = [];
+  const redoStack = [];
+  const MAX_HISTORY = 50;
+  
+  function addToHistory(tasks) {
+    // Clone tasks to avoid reference issues
+    const snapshot = JSON.parse(JSON.stringify(tasks));
+    historyStack.push(snapshot);
+    
+    // Limit history size
+    if (historyStack.length > MAX_HISTORY) {
+      historyStack.shift();
+    }
+    
+    // Clear redo stack when new action performed
+    redoStack.length = 0;
+    
+    updateUndoRedoButtons();
+  }
+  
+  function undo() {
+    console.log('Undo called, history length:', historyStack.length);
+    if (historyStack.length < 2) {
+      console.log('Not enough history');
+      return; // Need at least 2 states
+    }
+    
+    // Move current state to redo stack
+    const currentState = historyStack.pop();
+    redoStack.push(currentState);
+    
+    // Restore previous state
+    const previousState = historyStack[historyStack.length - 1];
+    saveUiverseTasks(previousState, true); // Skip adding to history
+    loadUiverseTasks();
+    updateUndoRedoButtons();
+    showToast('Undone', 'info', 1500);
+  }
+  
+  function redo() {
+    console.log('Redo called, redo stack length:', redoStack.length);
+    if (redoStack.length === 0) {
+      console.log('No redo history');
+      return;
+    }
+    
+    // Get state from redo stack
+    const nextState = redoStack.pop();
+    historyStack.push(nextState);
+    
+    // Restore state
+    saveUiverseTasks(nextState, true); // Skip adding to history
+    loadUiverseTasks();
+    updateUndoRedoButtons();
+    showToast('Redone', 'info', 1500);
+  }
+  
+  function updateUndoRedoButtons() {
+    const undoBtn = document.getElementById('undo-btn');
+    const redoBtn = document.getElementById('redo-btn');
+    
+    if (undoBtn) {
+      undoBtn.disabled = historyStack.length < 2;
+    }
+    
+    if (redoBtn) {
+      redoBtn.disabled = redoStack.length === 0;
+    }
+  }
+  
+  // Export/Import Functions
+  function exportTasks() {
+    const tasks = getUiverseTasks();
+    const notes = getNotes();
+    
+    const exportData = {
+      version: '1.0',
+      exportDate: new Date().toISOString(),
+      tasks: tasks,
+      notes: notes
+    };
+    
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `todolist-backup-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    showToast('Tasks exported successfully', 'success', 2000);
+  }
+  
+  function importTasks(file) {
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+      try {
+        const importData = JSON.parse(e.target.result);
+        
+        // Validate data structure
+        if (!importData.tasks || !Array.isArray(importData.tasks)) {
+          throw new Error('Invalid file format');
+        }
+        
+        // Confirm before overwriting
+        const confirmed = confirm(
+          `Import ${importData.tasks.length} tasks${importData.notes ? ` and ${importData.notes.length} notes` : ''}?\n\nThis will replace your current data.`
+        );
+        
+        if (!confirmed) return;
+        
+        // Import tasks
+        saveUiverseTasks(importData.tasks);
+        loadUiverseTasks();
+        
+        // Import notes if available
+        if (importData.notes && Array.isArray(importData.notes)) {
+          saveNotes(importData.notes);
+          loadNotes();
+        }
+        
+        updateStats();
+        showToast('Tasks imported successfully', 'success', 2000);
+      } catch (error) {
+        console.error('Import error:', error);
+        showToast('Failed to import: Invalid file format', 'error', 3000);
+      }
+    };
+    
+    reader.onerror = () => {
+      showToast('Failed to read file', 'error', 2000);
+    };
+    
+    reader.readAsText(file);
   }
 
   function getNotes() {
@@ -343,6 +492,12 @@ function initializeApp() {
       low: 'bg-green-100 text-green-700 border-green-300'
     };
     
+    const priorityIcons = {
+      high: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>',
+      medium: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>',
+      low: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>'
+    };
+    
     const priorityLabels = {
       high: 'High',
       medium: 'Med',
@@ -351,27 +506,28 @@ function initializeApp() {
     
     let priorityBadge = '';
     if (task.priority && task.priority !== 'none') {
-      priorityBadge = `<span class="task-badge ${priorityColors[task.priority]}">${priorityLabels[task.priority]}</span>`;
+      const icon = priorityIcons[task.priority];
+      priorityBadge = `<span class="task-badge ${priorityColors[task.priority]}">${icon} ${priorityLabels[task.priority]}</span>`;
     }
     
-    // Category badge
+    // Category badge with SVG icons
     const categoryIcons = {
-      work: '💼',
-      personal: '👤',
-      shopping: '🛒',
-      health: '❤️',
-      other: '📌'
+      work: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>',
+      personal: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>',
+      shopping: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>',
+      health: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>',
+      other: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>'
     };
     
     let categoryBadge = '';
     if (task.category) {
-      const icon = categoryIcons[task.category] || '📌';
+      const icon = categoryIcons[task.category] || categoryIcons.other;
       categoryBadge = `<span class="task-badge bg-amber-100 text-amber-700 border-amber-300">${icon} ${task.category}</span>`;
     }
     
-    // Drag handle for reorder mode
+    // Drag handle for reorder mode with SVG
     const dragHandleHtml = reorderMode && !task.completed 
-      ? '<span class="drag-handle" aria-hidden="true">⋮⋮</span>' 
+      ? '<span class="drag-handle" aria-hidden="true"><svg width="12" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="5" r="1.5"></circle><circle cx="9" cy="12" r="1.5"></circle><circle cx="9" cy="19" r="1.5"></circle><circle cx="15" cy="5" r="1.5"></circle><circle cx="15" cy="12" r="1.5"></circle><circle cx="15" cy="19" r="1.5"></circle></svg></span>' 
       : '';
     
     // Action buttons (edit/delete) - hidden in reorder mode
@@ -1008,6 +1164,94 @@ function initializeApp() {
   addTaskBtn.addEventListener('click', addTask);
   toggleReorderBtn.addEventListener('click', toggleReorderMode);
   
+  // Undo/Redo buttons
+  const undoBtn = document.getElementById('undo-btn');
+  const redoBtn = document.getElementById('redo-btn');
+  
+  console.log('Undo button:', undoBtn);
+  console.log('Redo button:', redoBtn);
+  console.log('History stack length:', historyStack.length);
+  
+  if (undoBtn) undoBtn.addEventListener('click', undo);
+  if (redoBtn) redoBtn.addEventListener('click', redo);
+  
+  // Export/Import buttons
+  const exportBtn = document.getElementById('export-btn');
+  const importBtn = document.getElementById('import-btn');
+  const importFileInput = document.getElementById('import-file-input');
+  
+  if (exportBtn) {
+    exportBtn.addEventListener('click', exportTasks);
+  }
+  
+  if (importBtn && importFileInput) {
+    importBtn.addEventListener('click', () => {
+      importFileInput.click();
+    });
+    
+    importFileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        importTasks(file);
+        // Reset input so same file can be imported again
+        e.target.value = '';
+      }
+    });
+  }
+  
+  // Keyboard shortcuts for undo/redo/export/import
+  document.addEventListener('keydown', (e) => {
+    // Ctrl+Z: Undo
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+      const activeElement = document.activeElement;
+      if (activeElement?.tagName !== 'INPUT' && activeElement?.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        undo();
+      }
+    }
+    
+    // Ctrl+Y or Ctrl+Shift+Z: Redo
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+      const activeElement = document.activeElement;
+      if (activeElement?.tagName !== 'INPUT' && activeElement?.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        redo();
+      }
+    }
+    
+    // Ctrl+E: Export
+    if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+      e.preventDefault();
+      exportTasks();
+    }
+    
+    // Ctrl+I: Import
+    if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
+      e.preventDefault();
+      importFileInput?.click();
+    }
+    
+    // Ctrl+Shift+C: Clear completed
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C') {
+      e.preventDefault();
+      const tasks = getUiverseTasks();
+      const completedCount = tasks.filter(t => t.completed).length;
+      
+      if (completedCount === 0) {
+        showToast('No completed tasks to clear', 'info', 2000);
+        return;
+      }
+      
+      const confirmed = confirm(`Clear ${completedCount} completed task${completedCount > 1 ? 's' : ''}?`);
+      if (confirmed) {
+        const activeTasks = tasks.filter(t => !t.completed);
+        saveUiverseTasks(activeTasks);
+        loadUiverseTasks();
+        showToast(`Cleared ${completedCount} task${completedCount > 1 ? 's' : ''}`, 'success', 2000);
+      }
+    }
+  });
+  
   // Search
   const searchInput = document.getElementById('task-search');
   if (searchInput) {
@@ -1040,6 +1284,11 @@ function initializeApp() {
   // Load data on page load
   loadUiverseTasks();
   loadNotes();
+  
+  // Initialize history with current state
+  // Don't call addToHistory here - it will be called on first action
+  // Just set initial button states
+  updateUndoRedoButtons();
   updateStats();
   
   // Expose migration function globally for testing
