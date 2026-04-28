@@ -1,0 +1,214 @@
+---
+// Keyboard shortcuts modal
+---
+
+<div id="shortcuts-modal" class="modal-overlay hidden" role="dialog" aria-labelledby="shortcuts-title" aria-modal="true">
+  <div class="modal shortcuts-modal">
+    <div class="flex justify-between items-center mb-6">
+      <h3 id="shortcuts-title" class="text-2xl font-bold text-amber-900 handwritten">Keyboard Shortcuts</h3>
+      <button id="close-shortcuts" type="button" aria-label="Close" class="text-amber-600 hover:text-amber-800 text-3xl leading-none">&times;</button>
+    </div>
+    
+    <div class="shortcuts-grid space-y-4">
+      <div class="shortcut-section">
+        <h4 class="text-lg font-bold text-amber-900 handwritten mb-3">General</h4>
+        <div class="space-y-2">
+          <div class="shortcut-item">
+            <kbd>?</kbd>
+            <span>Show shortcuts</span>
+          </div>
+          <div class="shortcut-item">
+            <kbd>Ctrl</kbd> + <kbd>N</kbd>
+            <span>New task</span>
+          </div>
+          <div class="shortcut-item">
+            <kbd>Ctrl</kbd> + <kbd>F</kbd>
+            <span>Focus search</span>
+          </div>
+          <div class="shortcut-item">
+            <kbd>/</kbd>
+            <span>Quick search</span>
+          </div>
+          <div class="shortcut-item">
+            <kbd>Ctrl</kbd> + <kbd>D</kbd>
+            <span>Toggle dark mode</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="shortcut-section">
+        <h4 class="text-lg font-bold text-amber-900 handwritten mb-3">Tasks</h4>
+        <div class="space-y-2">
+          <div class="shortcut-item">
+            <kbd>Ctrl</kbd> + <kbd>Z</kbd>
+            <span>Undo</span>
+          </div>
+          <div class="shortcut-item">
+            <kbd>Ctrl</kbd> + <kbd>Y</kbd>
+            <span>Redo</span>
+          </div>
+          <div class="shortcut-item">
+            <kbd>Ctrl</kbd> + <kbd>H</kbd>
+            <span>Toggle completed</span>
+          </div>
+          <div class="shortcut-item">
+            <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>C</kbd>
+            <span>Clear completed</span>
+          </div>
+          <div class="shortcut-item">
+            <kbd>Ctrl</kbd> + <kbd>E</kbd>
+            <span>Export tasks</span>
+          </div>
+          <div class="shortcut-item">
+            <kbd>Ctrl</kbd> + <kbd>I</kbd>
+            <span>Import tasks</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="shortcut-section">
+        <h4 class="text-lg font-bold text-amber-900 handwritten mb-3">Navigation</h4>
+        <div class="space-y-2">
+          <div class="shortcut-item">
+            <kbd>Esc</kbd>
+            <span>Close modal</span>
+          </div>
+          <div class="shortcut-item">
+            <kbd>Tab</kbd>
+            <span>Navigate forward</span>
+          </div>
+          <div class="shortcut-item">
+            <kbd>Shift</kbd> + <kbd>Tab</kbd>
+            <span>Navigate backward</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="mt-6 pt-4 border-t-2 border-amber-200">
+      <p class="text-sm text-amber-700 handwritten text-center">
+        Press <kbd>?</kbd> anytime to toggle this help
+      </p>
+    </div>
+  </div>
+</div>
+
+<style>
+  .shortcuts-modal {
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  
+  .shortcut-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem;
+    background: rgba(217, 119, 6, 0.05);
+    border-radius: 0.5rem;
+    transition: background 0.2s ease;
+  }
+  
+  .shortcut-item:hover {
+    background: rgba(217, 119, 6, 0.1);
+  }
+  
+  .shortcut-item span {
+    font-family: 'Kalam', cursive;
+    color: #92400e;
+    font-size: 0.95rem;
+  }
+  
+  kbd {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    background: #ffffff;
+    border: 2px solid #d97706;
+    border-radius: 0.375rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #78350f;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin: 0 0.25rem;
+  }
+  
+  [data-theme="dark"] kbd {
+    background: #2d2d2d;
+    border-color: #f59e0b;
+    color: #fbbf24;
+  }
+</style>
+
+<script>
+  // Keyboard shortcuts modal logic
+  const shortcutsModal = document.getElementById('shortcuts-modal');
+  const closeShortcuts = document.getElementById('close-shortcuts');
+  
+  function showShortcuts() {
+    shortcutsModal?.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+  
+  function hideShortcuts() {
+    shortcutsModal?.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+  
+  closeShortcuts?.addEventListener('click', hideShortcuts);
+  
+  shortcutsModal?.addEventListener('click', (e) => {
+    if (e.target === shortcutsModal) {
+      hideShortcuts();
+    }
+  });
+  
+  // Global keyboard shortcuts
+  document.addEventListener('keydown', (e) => {
+    // Show shortcuts with ?
+    if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
+      const activeElement = document.activeElement;
+      if (activeElement?.tagName !== 'INPUT' && activeElement?.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        showShortcuts();
+      }
+    }
+    
+    // Close modal with Esc
+    if (e.key === 'Escape') {
+      hideShortcuts();
+    }
+    
+    // Ctrl+D: Toggle dark mode
+    if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+      e.preventDefault();
+      document.getElementById('theme-toggle')?.click();
+    }
+    
+    // Ctrl+N: Focus new task input
+    if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+      e.preventDefault();
+      document.getElementById('new-task')?.focus();
+    }
+    
+    // Ctrl+F or /: Focus search
+    if (((e.ctrlKey || e.metaKey) && e.key === 'f') || e.key === '/') {
+      const activeElement = document.activeElement;
+      if (activeElement?.tagName !== 'INPUT' && activeElement?.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        document.getElementById('task-search')?.focus();
+      }
+    }
+    
+    // Ctrl+H: Toggle completed tasks
+    if ((e.ctrlKey || e.metaKey) && e.key === 'h') {
+      e.preventDefault();
+      const toggleBtn = document.querySelector('[aria-label="Toggle completed tasks visibility"]') as HTMLButtonElement;
+      toggleBtn?.click();
+    }
+  });
+  
+  // Export global function for other scripts
+  (window as any).showKeyboardShortcuts = showShortcuts;
+</script>

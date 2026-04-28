@@ -1,6 +1,9 @@
 ---
 import Navbar from "../components/layout/Navbar.astro"
 import Footer from "../components/layout/Footer.astro"
+import ThemeToggle from "../components/ui/ThemeToggle.astro"
+import KeyboardShortcuts from "../components/ui/KeyboardShortcuts.astro"
+import ProgressDashboard from "../components/ui/ProgressDashboard.astro"
 import '../styles/global.css';
 
 interface Props {
@@ -130,5 +133,8 @@ const canonicalUrl = `https://example.com${new URL(Astro.url).pathname}`;
                 <slot />
             </main>
 		<Footer />
+		<ThemeToggle />
+		<ProgressDashboard />
+		<KeyboardShortcuts />
 	</body>
 </html>
