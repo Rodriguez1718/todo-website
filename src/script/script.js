@@ -107,8 +107,8 @@ function setLastCheckDate() {
   localStorage.setItem('todolist_last_check_date', getCurrentDateString());
 }
 
-function migrateTomorrowToToday() {
-  const tasks = getUiverseTasks();
+async function migrateTomorrowToToday() {
+  const tasks = await getUiverseTasks();
   let migrated = false;
   
   const updatedTasks = tasks.map(task => {
@@ -124,20 +124,20 @@ function migrateTomorrowToToday() {
   });
   
   if (migrated) {
-    saveUiverseTasks(updatedTasks);
+    await saveUiverseTasks(updatedTasks);
     console.log('Tasks migrated: Tomorrow tasks moved to Today');
     
     // Refresh the display immediately
     if (typeof loadUiverseTasks === 'function') {
-      loadUiverseTasks();
+      await loadUiverseTasks();
     }
   }
   
   return migrated;
 }
 
-function migrateOverdueTasks() {
-  const tasks = getUiverseTasks();
+async function migrateOverdueTasks() {
+  const tasks = await getUiverseTasks();
   const incompleteTodayTasks = tasks.filter(t => t.dueDate === 'today' && !t.completed);
   
   if (incompleteTodayTasks.length === 0) {
@@ -157,23 +157,23 @@ function migrateOverdueTasks() {
     return task;
   });
   
-  saveUiverseTasks(updatedTasks);
+  await saveUiverseTasks(updatedTasks);
   console.log(`Migrated ${incompleteTodayTasks.length} overdue tasks to tomorrow`);
   
   return incompleteTodayTasks;
 }
 
-function checkAndMigrateTasks() {
+async function checkAndMigrateTasks() {
   const currentDate = getCurrentDateString();
   const lastCheckDate = getLastCheckDate();
   
   // If this is the first time or if the date has changed
   if (!lastCheckDate || lastCheckDate !== currentDate) {
     // First, migrate incomplete today tasks to tomorrow (overdue)
-    const overdueTasks = migrateOverdueTasks();
+    const overdueTasks = await migrateOverdueTasks();
     
     // Then migrate tomorrow's tasks to today
-    migrateTomorrowToToday();
+    await migrateTomorrowToToday();
     
     // Update the last check date
     setLastCheckDate();
@@ -189,7 +189,7 @@ function checkAndMigrateTasks() {
   return false;
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
   console.log('DOMContentLoaded event fired');
   
   // Initialize localStorage with sample data if empty
@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   // Check and migrate tasks on page load
-  checkAndMigrateTasks();
+  await checkAndMigrateTasks();
   
   // Add a small delay to ensure all components are rendered
   setTimeout(function() {
@@ -212,22 +212,44 @@ document.addEventListener('DOMContentLoaded', function() {
   }, 100);
 });
 
-function getUiverseTasks() {
-    const stored = localStorage.getItem('todolist_uiverse_tasks');
-    return stored ? JSON.parse(stored) : sampleTasks.slice();
+// Make getUiverseTasks async to support Supabase
+async function getUiverseTasks() {
+  // Try Supabase sync first
+  if (window.supabaseSync) {
+    try {
+      const tasks = await window.supabaseSync.getTasks();
+      return tasks;
+    } catch (error) {
+      console.error('Failed to get tasks from Supabase, falling back to localStorage:', error);
+    }
   }
+  
+  // Fallback to localStorage
+  const stored = localStorage.getItem('todolist_uiverse_tasks');
+  return stored ? JSON.parse(stored) : sampleTasks.slice();
+}
   
   // Expose globally for subtasks module
   window.getUiverseTasks = getUiverseTasks;
 
-  function saveUiverseTasks(tasks, skipHistory = false) {
+  async function saveUiverseTasks(tasks, skipHistory = false) {
     // Capture current state BEFORE saving new state (for undo)
     if (!skipHistory) {
-      const currentTasks = getUiverseTasks();
+      const currentTasks = await getUiverseTasks();
       addToHistory(currentTasks);
     }
     
+    // Save to localStorage (always as backup)
     localStorage.setItem('todolist_uiverse_tasks', JSON.stringify(tasks));
+    
+    // Sync to Supabase if available
+    if (window.supabaseSync) {
+      try {
+        await window.supabaseSync.saveTasks(tasks);
+      } catch (error) {
+        console.error('Failed to sync tasks to Supabase:', error);
+      }
+    }
     
     // Dispatch custom event to notify other components
     document.dispatchEvent(new CustomEvent('tasksUpdated'));
@@ -257,7 +279,7 @@ function getUiverseTasks() {
     updateUndoRedoButtons();
   }
   
-  function undo() {
+  async function undo() {
     console.log('Undo called, history length:', historyStack.length);
     if (historyStack.length < 2) {
       console.log('Not enough history');
@@ -270,13 +292,13 @@ function getUiverseTasks() {
     
     // Restore previous state
     const previousState = historyStack[historyStack.length - 1];
-    saveUiverseTasks(previousState, true); // Skip adding to history
-    loadUiverseTasks();
+    await saveUiverseTasks(previousState, true); // Skip adding to history
+    await loadUiverseTasks();
     updateUndoRedoButtons();
     showToast('Undone', 'info', 1500);
   }
   
-  function redo() {
+  async function redo() {
     console.log('Redo called, redo stack length:', redoStack.length);
     if (redoStack.length === 0) {
       console.log('No redo history');
@@ -288,8 +310,8 @@ function getUiverseTasks() {
     historyStack.push(nextState);
     
     // Restore state
-    saveUiverseTasks(nextState, true); // Skip adding to history
-    loadUiverseTasks();
+    await saveUiverseTasks(nextState, true); // Skip adding to history
+    await loadUiverseTasks();
     updateUndoRedoButtons();
     showToast('Redone', 'info', 1500);
   }
@@ -378,13 +400,34 @@ function getUiverseTasks() {
     reader.readAsText(file);
   }
 
-  function getNotes() {
+  async function getNotes() {
+    // Try Supabase sync first
+    if (window.supabaseSync) {
+      try {
+        const notes = await window.supabaseSync.getNotes();
+        return notes;
+      } catch (error) {
+        console.error('Failed to get notes from Supabase, falling back to localStorage:', error);
+      }
+    }
+    
+    // Fallback to localStorage
     const stored = localStorage.getItem('todolist_notes');
     return stored ? JSON.parse(stored) : sampleNotes.slice();
   }
 
-  function saveNotes(notes) {
+  async function saveNotes(notes) {
+    // Save to localStorage (always as backup)
     localStorage.setItem('todolist_notes', JSON.stringify(notes));
+    
+    // Sync to Supabase if available
+    if (window.supabaseSync) {
+      try {
+        await window.supabaseSync.saveNotes(notes);
+      } catch (error) {
+        console.error('Failed to sync notes to Supabase:', error);
+      }
+    }
   }
 
 function initializeApp() {
@@ -620,13 +663,13 @@ container.innerHTML = `
 
     // Add change event listener for checkbox
     const checkbox = container.querySelector('input[type="checkbox"]');
-    checkbox.addEventListener('change', () => {
-      const tasks = getUiverseTasks();
+    checkbox.addEventListener('change', async () => {
+      const tasks = await getUiverseTasks();
       const taskIndex = tasks.findIndex((t) => t.id === task.id);
       if (taskIndex !== -1) {
         tasks[taskIndex].completed = checkbox.checked;
         tasks[taskIndex].completedAt = checkbox.checked ? new Date().toISOString() : null;
-        saveUiverseTasks(tasks);
+        await saveUiverseTasks(tasks);
         
         // Update ARIA
         checkbox.setAttribute('aria-checked', checkbox.checked);
@@ -643,7 +686,7 @@ container.innerHTML = `
         }
         
         // Refresh the display
-        loadUiverseTasks();
+        await loadUiverseTasks();
         updateStats();
       }
     });
@@ -669,8 +712,8 @@ container.innerHTML = `
     return container;
   }
   
-  function editTask(taskId) {
-    const tasks = getUiverseTasks();
+  async function editTask(taskId) {
+    const tasks = await getUiverseTasks();
     const task = tasks.find(t => t.id === taskId);
     
     if (!task) return;
@@ -694,7 +737,7 @@ container.innerHTML = `
     textInput.focus();
     
     // Handle form submit
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
       e.preventDefault();
       
       const newText = textInput.value.trim();
@@ -706,8 +749,8 @@ container.innerHTML = `
         task.priority = newPriority;
         task.category = newCategory;
         
-        saveUiverseTasks(tasks);
-        loadUiverseTasks();
+        await saveUiverseTasks(tasks);
+        await loadUiverseTasks();
         showToast('Task updated', 'success', 2000);
         
         // Close modal
@@ -744,8 +787,8 @@ container.innerHTML = `
     document.addEventListener('keydown', handleEscape);
   }
   
-  function deleteTask(taskId) {
-    const tasks = getUiverseTasks();
+  async function deleteTask(taskId) {
+    const tasks = await getUiverseTasks();
     const task = tasks.find(t => t.id === taskId);
     
     if (!task) return;
@@ -754,8 +797,8 @@ container.innerHTML = `
     
     if (confirmed) {
       const filtered = tasks.filter(t => t.id !== taskId);
-      saveUiverseTasks(filtered);
-      loadUiverseTasks();
+      await saveUiverseTasks(filtered);
+      await loadUiverseTasks();
       updateStats();
       showToast('Task deleted', 'success', 2000);
     }
@@ -786,10 +829,10 @@ container.innerHTML = `
 
     // Add delete functionality
     const deleteBtn = noteDiv.querySelector('.delete-note');
-    deleteBtn.addEventListener('click', () => {
-      const notes = getNotes();
+    deleteBtn.addEventListener('click', async () => {
+      const notes = await getNotes();
       const filteredNotes = notes.filter((n) => n.id !== note.id);
-      saveNotes(filteredNotes);
+      await saveNotes(filteredNotes);
       noteDiv.remove();
       checkNotesEmpty();
       
@@ -833,12 +876,12 @@ container.innerHTML = `
     clearBtn.className = 'text-xs px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-md handwritten transition-colors';
     clearBtn.textContent = 'Clear Done';
     clearBtn.setAttribute('aria-label', 'Clear all completed tasks');
-    clearBtn.onclick = () => {
+    clearBtn.onclick = async () => {
       if (confirm('Clear all completed tasks?')) {
-        const tasks = getUiverseTasks();
+        const tasks = await getUiverseTasks();
         const activeTasks = tasks.filter(t => !t.completed);
-        saveUiverseTasks(activeTasks);
-        loadUiverseTasks();
+        await saveUiverseTasks(activeTasks);
+        await loadUiverseTasks();
         showToast('Completed tasks cleared', 'success');
       }
     };
@@ -853,8 +896,8 @@ container.innerHTML = `
     return separator;
   }
 
-  function loadUiverseTasks() {
-  const tasks = getUiverseTasks();
+  async function loadUiverseTasks() {
+  const tasks = await getUiverseTasks();
   todayTasksList.innerHTML = '';
   tomorrowTasksList.innerHTML = '';
   
@@ -892,7 +935,7 @@ container.innerHTML = `
   
   // Render completed tasks (grouped by date)
   if (window.renderGroupedCompletedTasks) {
-    window.renderGroupedCompletedTasks();
+    await window.renderGroupedCompletedTasks();
   }
   
   // Update empty states
@@ -902,8 +945,8 @@ container.innerHTML = `
   // Expose globally for subtasks module
   window.loadUiverseTasks = loadUiverseTasks;
 
-  function loadNotes() {
-    const notes = getNotes();
+  async function loadNotes() {
+    const notes = await getNotes();
     notesList.innerHTML = '';
     
     notes.forEach((note) => {
@@ -914,14 +957,14 @@ container.innerHTML = `
     checkNotesEmpty();
   }
 
-  function addTask() {
+  async function addTask() {
     const taskText = newTaskInput.value.trim();
     const selectedDate = document.querySelector('input[name="task-date"]:checked');
     const priority = document.getElementById('task-priority')?.value || 'none';
     const category = document.getElementById('task-category')?.value || '';
     
     if (taskText && selectedDate) {
-      const tasks = getUiverseTasks();
+      const tasks = await getUiverseTasks();
       const newTask = {
         id: Date.now().toString(),
         text: taskText,
@@ -933,7 +976,7 @@ container.innerHTML = `
         category: category
       };
       tasks.push(newTask);
-      saveUiverseTasks(tasks);
+      await saveUiverseTasks(tasks);
       newTaskInput.value = '';
       
       // Reset form
@@ -942,7 +985,7 @@ container.innerHTML = `
       if (document.getElementById('task-priority')) document.getElementById('task-priority').value = 'none';
       if (document.getElementById('task-category')) document.getElementById('task-category').value = '';
       
-      loadUiverseTasks();
+      await loadUiverseTasks();
       updateStats();
       
       // Show success toast
@@ -950,8 +993,8 @@ container.innerHTML = `
     }
   }
 
-  function checkTasksEmpty() {
-  const tasks = getUiverseTasks();
+  async function checkTasksEmpty() {
+  const tasks = await getUiverseTasks();
   const activeTasks = tasks.filter(t => !t.completed);
   const completedTasks = tasks.filter(t => t.completed);
   
@@ -998,8 +1041,8 @@ container.innerHTML = `
 }
 
   
-  function updateStats() {
-    const tasks = getUiverseTasks();
+  async function updateStats() {
+    const tasks = await getUiverseTasks();
     
     // Helper to count all tasks including subtasks
     function countAllTasks(taskList) {
@@ -1115,7 +1158,7 @@ container.innerHTML = `
     }
   }
   
-  function handleDrop(e) {
+  async function handleDrop(e) {
     if (e.stopPropagation) {
       e.stopPropagation();
     }
@@ -1128,7 +1171,7 @@ container.innerHTML = `
       const targetId = targetContainer.dataset.taskId;
       
       // Get tasks and reorder
-      const tasks = getUiverseTasks();
+      const tasks = await getUiverseTasks();
       const draggedTask = tasks.find(t => t.id === draggedId);
       const targetTask = tasks.find(t => t.id === targetId);
       
@@ -1141,8 +1184,8 @@ container.innerHTML = `
         const newTargetIndex = tasks.indexOf(targetTask);
         tasks.splice(newTargetIndex, 0, draggedTask);
         
-        saveUiverseTasks(tasks);
-        loadUiverseTasks();
+        await saveUiverseTasks(tasks);
+        await loadUiverseTasks();
         showToast('Task reordered', 'success', 1500);
       }
     }
@@ -1163,12 +1206,12 @@ container.innerHTML = `
     noteContentInput.value = '';
   }
 
-  function saveNote() {
+  async function saveNote() {
     const title = noteTitleInput.value.trim();
     const content = noteContentInput.value.trim();
     
     if (title && content) {
-      const notes = getNotes();
+      const notes = await getNotes();
       const newNote = {
         id: Date.now().toString(),
         title: title,
@@ -1176,7 +1219,7 @@ container.innerHTML = `
         createdAt: new Date().toISOString()
       };
       notes.unshift(newNote);
-      saveNotes(notes);
+      await saveNotes(notes);
       
       const noteElement = createNoteElement(newNote);
       notesList.insertBefore(noteElement, notesList.firstChild);
@@ -1300,21 +1343,23 @@ container.innerHTML = `
     // Ctrl+Shift+C: Clear completed
     if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C') {
       e.preventDefault();
-      const tasks = getUiverseTasks();
-      const completedCount = tasks.filter(t => t.completed).length;
-      
-      if (completedCount === 0) {
-        showToast('No completed tasks to clear', 'info', 2000);
-        return;
-      }
-      
-      const confirmed = confirm(`Clear ${completedCount} completed task${completedCount > 1 ? 's' : ''}?`);
-      if (confirmed) {
-        const activeTasks = tasks.filter(t => !t.completed);
-        saveUiverseTasks(activeTasks);
-        loadUiverseTasks();
-        showToast(`Cleared ${completedCount} task${completedCount > 1 ? 's' : ''}`, 'success', 2000);
-      }
+      (async () => {
+        const tasks = await getUiverseTasks();
+        const completedCount = tasks.filter(t => t.completed).length;
+        
+        if (completedCount === 0) {
+          showToast('No completed tasks to clear', 'info', 2000);
+          return;
+        }
+        
+        const confirmed = confirm(`Clear ${completedCount} completed task${completedCount > 1 ? 's' : ''}?`);
+        if (confirmed) {
+          const activeTasks = tasks.filter(t => !t.completed);
+          await saveUiverseTasks(activeTasks);
+          await loadUiverseTasks();
+          showToast(`Cleared ${completedCount} task${completedCount > 1 ? 's' : ''}`, 'success', 2000);
+        }
+      })();
     }
   });
   
@@ -1366,8 +1411,8 @@ container.innerHTML = `
   updateStats();
   
   // Expose migration function globally for testing
-  window.migrateTasks = function() {
-    const migrated = migrateTomorrowToToday();
+  window.migrateTasks = async function() {
+    const migrated = await migrateTomorrowToToday();
     if (migrated) {
       alert('Tasks migrated! Tomorrow tasks moved to Today.');
     } else {

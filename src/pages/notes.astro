@@ -37,6 +37,14 @@ const description = "Create and manage your notes. Keep track of important infor
     </section>
 
     <script>
+        import '/src/script/supabase-sync.js';
         import '/src/script/script.js';
+        
+        // Initialize Supabase sync after page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            if ((window as any).supabaseSync) {
+                await (window as any).supabaseSync.initializeSync();
+            }
+        });
     </script>
 </BaseLayout>

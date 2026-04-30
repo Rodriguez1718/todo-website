@@ -33,9 +33,17 @@ import CheckIcon from "../icons/CheckIcon.astro";
 </section>
 
 <script>
+  import '/src/script/supabase-sync.js';
   import '/src/script/script.js';
   import '/src/script/subtasks.js';
   import '/src/script/completed-grouping.js';
+  
+  // Initialize Supabase sync after page load
+  document.addEventListener('DOMContentLoaded', async () => {
+    if ((window as any).supabaseSync) {
+      await (window as any).supabaseSync.initializeSync();
+    }
+  });
 </script>
 
 

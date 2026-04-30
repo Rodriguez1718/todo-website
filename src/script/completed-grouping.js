@@ -105,15 +105,33 @@
     return sortedGroups;
   };
 
+  // Flatten tasks including subtasks
+  function flattenTasks(tasks) {
+    const flat = [];
+    
+    function flatten(taskList) {
+      taskList.forEach(task => {
+        flat.push(task);
+        if (task.subtasks && task.subtasks.length > 0) {
+          flatten(task.subtasks);
+        }
+      });
+    }
+    
+    flatten(tasks);
+    return flat;
+  }
+
   // Render grouped completed tasks
-  window.renderGroupedCompletedTasks = function() {
+  window.renderGroupedCompletedTasks = async function() {
     const container = document.getElementById('completed-tasks-grouped');
     if (!container) return;
     
     container.innerHTML = '';
     
-    const tasks = window.getUiverseTasks();
-    const completedTasks = tasks.filter(t => t.completed);
+    const tasks = await window.getUiverseTasks();
+    const allTasks = flattenTasks(tasks);
+    const completedTasks = allTasks.filter(t => t.completed);
     
     // Apply filters
     let filteredTasks = completedTasks;
@@ -172,7 +190,7 @@
     const filterBtns = document.querySelectorAll('.time-filter-btn');
     
     filterBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         const period = btn.dataset.period;
         
         // Update active state
@@ -181,7 +199,7 @@
         
         // Update period and re-render
         currentPeriod = period;
-        window.renderGroupedCompletedTasks();
+        await window.renderGroupedCompletedTasks();
       });
     });
   }

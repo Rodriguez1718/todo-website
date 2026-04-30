@@ -5,8 +5,8 @@
   'use strict';
 
   // Add subtask to parent task
-  window.addSubtask = function(parentId, subtaskText) {
-    const tasks = window.getUiverseTasks();
+  window.addSubtask = async function(parentId, subtaskText) {
+    const tasks = await window.getUiverseTasks();
     const parentTask = tasks.find(t => t.id === parentId);
     
     if (!parentTask) return;
@@ -29,15 +29,15 @@
     }
     
     parentTask.subtasks.push(subtask);
-    window.saveUiverseTasks(tasks);
-    window.loadUiverseTasks();
+    await window.saveUiverseTasks(tasks);
+    await window.loadUiverseTasks();
     if (window.updateStats) window.updateStats();
     window.showToast('Subtask added', 'success', 1500);
   };
 
   // Toggle subtask completion
-  window.toggleSubtask = function(parentId, subtaskId) {
-    const tasks = window.getUiverseTasks();
+  window.toggleSubtask = async function(parentId, subtaskId) {
+    const tasks = await window.getUiverseTasks();
     const parentTask = tasks.find(t => t.id === parentId);
     
     if (!parentTask || !parentTask.subtasks) return;
@@ -48,8 +48,8 @@
     subtask.completed = !subtask.completed;
     subtask.completedAt = subtask.completed ? new Date().toISOString() : null;
     
-    window.saveUiverseTasks(tasks);
-    window.loadUiverseTasks();
+    await window.saveUiverseTasks(tasks);
+    await window.loadUiverseTasks();
     if (window.updateStats) window.updateStats();
     
     if (subtask.completed) {
@@ -58,16 +58,16 @@
   };
 
   // Delete subtask
-  window.deleteSubtask = function(parentId, subtaskId) {
-    const tasks = window.getUiverseTasks();
+  window.deleteSubtask = async function(parentId, subtaskId) {
+    const tasks = await window.getUiverseTasks();
     const parentTask = tasks.find(t => t.id === parentId);
     
     if (!parentTask || !parentTask.subtasks) return;
     
     parentTask.subtasks = parentTask.subtasks.filter(st => st.id !== subtaskId);
     
-    window.saveUiverseTasks(tasks);
-    window.loadUiverseTasks();
+    await window.saveUiverseTasks(tasks);
+    await window.loadUiverseTasks();
     if (window.updateStats) window.updateStats();
     window.showToast('Subtask deleted', 'info', 1500);
   };
