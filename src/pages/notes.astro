@@ -1,0 +1,42 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro"
+import NewNotes from "../components/layout/Notes.astro"
+import CheckIcon from "../components/icons/CheckIcon.astro"
+
+const title = "My Notes - TodoList App";
+const description = "Create and manage your notes. Keep track of important information, ideas, and reminders.";
+---
+
+<BaseLayout title={title} description={description}>
+    <section class="relative overflow-hidden py-16 px-4" id="notes">
+        <div class="absolute inset-0 opacity-10">
+            <div class="absolute top-20 right-20 w-80 h-80 bg-amber-300 rounded-full blur-3xl"></div>
+            <div class="absolute bottom-10 left-10 w-96 h-96 bg-amber-200 rounded-full blur-3xl"></div>
+        </div>
+        
+        <div class="max-w-4xl mx-auto relative z-10">
+            <div class="text-center mb-12">
+                <div class="inline-block mb-4">
+                    <span class="inline-flex items-center gap-2 bg-amber-600 text-white px-4 py-2 rounded-full text-sm font-bold handwritten">
+                        <CheckIcon width={16} height={16} />
+                        manage notes
+                    </span>
+                </div>
+                
+                <h2 class="font-bold text-amber-900 mb-4 handwritten">
+                    Your Notes
+                </h2>
+                <p class="text-amber-700 text-lg handwritten font-light">
+                    Capture your thoughts, ideas, and important information
+                </p>
+            </div>
+
+            <!-- Notes Component -->
+            <NewNotes />
+        </div>
+    </section>
+
+    <script>
+        import '/src/script/script.js';
+    </script>
+</BaseLayout>
