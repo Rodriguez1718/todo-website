@@ -10,9 +10,15 @@ interface Props {
 	title?: string;
 	description?: string;
 	image?: string;
+	hideNavFooter?: boolean;
 }
 
-const { title = "TodoList - Simple Task Management App", description = "A clean, simple to-do list application to organize your daily tasks and boost productivity. Create, manage, and track your tasks effortlessly.", image = "/og-image.jpg" } = Astro.props;
+const { 
+	title = "TodoList - Simple Task Management App", 
+	description = "A clean, simple to-do list application to organize your daily tasks and boost productivity. Create, manage, and track your tasks effortlessly.", 
+	image = "/og-image.jpg",
+	hideNavFooter = false
+} = Astro.props;
 const canonicalUrl = `https://example.com${new URL(Astro.url).pathname}`;
 ---
 
@@ -87,7 +93,7 @@ const canonicalUrl = `https://example.com${new URL(Astro.url).pathname}`;
 		<meta name="theme-color" content="#b45309" />
 		<link rel="alternate" hreflang="en" href={canonicalUrl} />
 		
-		<script src="/script.js" is:inline></script>
+		<script src="/src/script/subtasks.js" is:inline></script>
 		
 		<!-- Organization Structured Data -->
 		<script type="application/ld+json">
@@ -128,13 +134,13 @@ const canonicalUrl = `https://example.com${new URL(Astro.url).pathname}`;
 		<!-- Skip to main content link -->
 		<a href="#main-content" class="sr-only focus:not-sr-only">Skip to main content</a>
 		
-		<Navbar />
+		{!hideNavFooter && <Navbar />}
             <main id="main-content" role="main">
                 <slot />
             </main>
-		<Footer />
-		<ThemeToggle />
-		<ProgressDashboard />
-		<KeyboardShortcuts />
+		{!hideNavFooter && <Footer />}
+		{!hideNavFooter && <ThemeToggle />}
+		{!hideNavFooter && <ProgressDashboard />}
+		{!hideNavFooter && <KeyboardShortcuts />}
 	</body>
 </html>

@@ -522,8 +522,32 @@
     if (!stored) return;
     
     const tasks = JSON.parse(stored);
-    const total = tasks.length;
-    const completed = tasks.filter((t: any) => t.completed).length;
+    
+    // Helper to count all tasks including subtasks
+    function countAllTasks(taskList: any[]) {
+      let total = 0;
+      let completed = 0;
+      
+      taskList.forEach((task: any) => {
+        // Count main task
+        total++;
+        if (task.completed) completed++;
+        
+        // Count subtasks
+        if (task.subtasks && task.subtasks.length > 0) {
+          task.subtasks.forEach((subtask: any) => {
+            total++;
+            if (subtask.completed) completed++;
+          });
+        }
+      });
+      
+      return { total, completed };
+    }
+    
+    const counts = countAllTasks(tasks);
+    const total = counts.total;
+    const completed = counts.completed;
     const active = total - completed;
     const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
     
@@ -541,7 +565,7 @@
       progressText.textContent = `${completionRate}%`;
     }
     
-    // Priority breakdown
+    // Priority breakdown (main tasks only)
     const high = tasks.filter((t: any) => t.priority === 'high').length;
     const medium = tasks.filter((t: any) => t.priority === 'medium').length;
     const low = tasks.filter((t: any) => t.priority === 'low').length;
@@ -550,7 +574,7 @@
     document.getElementById('stat-medium')!.textContent = medium.toString();
     document.getElementById('stat-low')!.textContent = low.toString();
     
-    // Category breakdown
+    // Category breakdown (main tasks only)
     const categories: Record<string, number> = {};
     tasks.forEach((t: any) => {
       if (t.category) {

@@ -216,6 +216,9 @@ function getUiverseTasks() {
     const stored = localStorage.getItem('todolist_uiverse_tasks');
     return stored ? JSON.parse(stored) : sampleTasks.slice();
   }
+  
+  // Expose globally for subtasks module
+  window.getUiverseTasks = getUiverseTasks;
 
   function saveUiverseTasks(tasks, skipHistory = false) {
     // Capture current state BEFORE saving new state (for undo)
@@ -229,6 +232,9 @@ function getUiverseTasks() {
     // Dispatch custom event to notify other components
     document.dispatchEvent(new CustomEvent('tasksUpdated'));
   }
+  
+  // Expose globally for subtasks module
+  window.saveUiverseTasks = saveUiverseTasks;
   
   // Undo/Redo History System
   const historyStack = [];
@@ -393,7 +399,6 @@ function initializeApp() {
   const tomorrowTasksList = document.getElementById('tomorrow-tasks-list');
   const todayEmptyState = document.getElementById('today-empty-state');
   const tomorrowEmptyState = document.getElementById('tomorrow-empty-state');
-  const uiverseEmptyState = document.getElementById('uiverse-empty-state');
   const toggleReorderBtn = document.getElementById('toggle-reorder-btn');
 
   // Notes elements
@@ -417,38 +422,28 @@ function initializeApp() {
   let reorderMode = false;
   let draggedElement = null;
   let currentFilter = 'all';
+  let currentTab = 'active';
   let searchQuery = '';
+  
+  // Expose for completed grouping module
+  window.searchQuery = searchQuery;
+  window.currentFilter = currentFilter;
+  window.createUiverseTaskElement = createUiverseTaskElement;
 
   // Check if required elements exist
   if (!addTaskBtn || !newTaskInput) {
-    console.error('Required form elements not found');
-    console.log('addTaskBtn:', addTaskBtn);
-    console.log('newTaskInput:', newTaskInput);
-    return;
+    console.log('Task form elements not found - skipping task form initialization (this is normal on notes page)');
+    // Don't return - continue initialization
   }
 
-  if (!todayTasksList || !tomorrowTasksList || !todayEmptyState || !tomorrowEmptyState || !uiverseEmptyState || !toggleReorderBtn) {
-    console.error('Required Uiverse task DOM elements not found');
-    console.log('todayTasksList:', todayTasksList);
-    console.log('tomorrowTasksList:', tomorrowTasksList);
-    console.log('todayEmptyState:', todayEmptyState);
-    console.log('tomorrowEmptyState:', tomorrowEmptyState);
-    console.log('uiverseEmptyState:', uiverseEmptyState);
-    console.log('toggleReorderBtn:', toggleReorderBtn);
-    return;
+  if (!todayTasksList || !tomorrowTasksList || !todayEmptyState || !tomorrowEmptyState || !toggleReorderBtn) {
+    console.log('Task list elements not found - skipping task list initialization (this is normal on notes page)');
+    // Don't return - continue initialization
   }
 
   if (!addNoteBtn || !noteForm || !noteTitleInput || !noteContentInput || !saveNoteBtn || !cancelNoteBtn || !notesList || !notesEmptyState) {
-    console.error('Required notes DOM elements not found');
-    console.log('addNoteBtn:', addNoteBtn);
-    console.log('noteForm:', noteForm);
-    console.log('noteTitleInput:', noteTitleInput);
-    console.log('noteContentInput:', noteContentInput);
-    console.log('saveNoteBtn:', saveNoteBtn);
-    console.log('cancelNoteBtn:', cancelNoteBtn);
-    console.log('notesList:', notesList);
-    console.log('notesEmptyState:', notesEmptyState);
-    return;
+    console.log('Notes elements not found - skipping notes initialization (this is normal on tasks page)');
+    // Don't return - continue with task initialization
   }
 
   // Data management functions
@@ -548,31 +543,70 @@ function initializeApp() {
       </div>
     ` : '';
     
-    // New sketchy checkbox design
-    container.innerHTML = `
-      <div class="task-content">
-        <div class="task-main">
-          <label class="sketchy-checkbox">
-            ${dragHandleHtml}
-            <input 
-              type="checkbox" 
-              ${task.completed ? 'checked' : ''} 
-              aria-label="${task.text}"
-              aria-checked="${task.completed}"
-              ${reorderMode ? 'disabled' : ''}
-            />
-            <span class="sketchy-checkmark" aria-hidden="true"></span>
-            <span class="sketchy-text">${task.text}</span>
-          </label>
-          ${actionButtonsHtml}
-        </div>
-        <div class="task-badges">
-          ${priorityBadge}
-          ${categoryBadge}
-          ${completionTimeHtml}
-        </div>
-      </div>
-    `;
+    // Subtask progress indicator
+const progress = window.getSubtaskProgress ? window.getSubtaskProgress(task) : null;
+const subtaskProgressHtml = progress ? `
+  <span class="subtask-progress">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <polyline points="20 6 9 17 4 12"></polyline>
+    </svg>
+    ${progress.completed}/${progress.total}
+  </span>
+` : '';
+
+// Subtask toggle button
+const hasSubtasks = task.subtasks && task.subtasks.length > 0;
+const subtaskToggleHtml = hasSubtasks ? `
+  <button 
+    class="subtask-toggle" 
+    onclick="event.stopPropagation(); window.toggleSubtasksVisibility('${task.id}')"
+    aria-label="Toggle subtasks"
+    title="Toggle subtasks">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </button>
+` : '';
+
+container.innerHTML = `
+  <div class="task-content">
+    <div class="task-main">
+    ${subtaskToggleHtml}
+      <label class="sketchy-checkbox">
+        ${dragHandleHtml}
+        <input 
+          type="checkbox" 
+          ${task.completed ? 'checked' : ''} 
+          aria-label="${task.text}"
+          aria-checked="${task.completed}"
+          ${reorderMode ? 'disabled' : ''}
+        />
+        <span class="sketchy-checkmark" aria-hidden="true"></span>
+        <span class="sketchy-text">${task.text}</span>
+      </label>
+      ${actionButtonsHtml}
+    </div>
+    <div class="task-badges">
+      ${priorityBadge}
+      ${categoryBadge}
+      ${subtaskProgressHtml}
+      ${completionTimeHtml}
+    </div>
+  </div>
+  ${window.renderSubtasks ? window.renderSubtasks(task, container) : ''}
+  ${!reorderMode && !task.completed ? `
+    <button 
+      class="add-subtask-btn" 
+      onclick="window.showAddSubtaskInput('${task.id}')"
+      title="Add subtask">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      <span>Add Subtask</span>
+    </button>
+  ` : ''}
+`;
 
     // Add drag event listeners
     if (reorderMode && !task.completed) {
@@ -820,99 +854,53 @@ function initializeApp() {
   }
 
   function loadUiverseTasks() {
-    const tasks = getUiverseTasks();
-    todayTasksList.innerHTML = '';
-    tomorrowTasksList.innerHTML = '';
-    
-    // Apply filters
-    let filteredTasks = tasks;
-    
-    // Search filter
-    if (searchQuery) {
-      filteredTasks = filteredTasks.filter(task => 
-        task.text.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-    
-    // Priority filter
-    if (currentFilter !== 'all') {
-      filteredTasks = filteredTasks.filter(task => task.priority === currentFilter);
-    }
-    
-    // Separate tasks by date
-    const todayTasks = filteredTasks.filter((task) => task.dueDate === 'today');
-    const tomorrowTasks = filteredTasks.filter((task) => task.dueDate === 'tomorrow');
-    
-    // Smart categorization: active first, then completed (sorted by completion time)
-    function categorizeTasks(taskList) {
-      const active = taskList.filter(t => !t.completed);
-      const completed = taskList.filter(t => t.completed)
-        .sort((a, b) => {
-          // Sort completed by completion time (newest first)
-          const timeA = a.completedAt ? new Date(a.completedAt).getTime() : 0;
-          const timeB = b.completedAt ? new Date(b.completedAt).getTime() : 0;
-          return timeB - timeA;
-        });
-      
-      return { active, completed };
-    }
-    
-    // Load today's tasks with smart categorization
-    const todayCategorized = categorizeTasks(todayTasks);
-    
-    if (todayCategorized.active.length > 0) {
-      todayCategorized.active.forEach((task) => {
-        const taskElement = createUiverseTaskElement(task);
-        todayTasksList.appendChild(taskElement);
-      });
-    }
-    
-    // Always show separator if completed tasks exist
-    if (todayCategorized.completed.length > 0) {
-      // Add separator if there are active tasks
-      if (todayCategorized.active.length > 0) {
-        const separator = createCompletedSeparator();
-        todayTasksList.appendChild(separator);
-      }
-      
-      // Only show completed tasks if not hidden
-      if (showUiverseCompleted) {
-        todayCategorized.completed.forEach((task) => {
-          const taskElement = createUiverseTaskElement(task);
-          todayTasksList.appendChild(taskElement);
-        });
-      }
-    }
-    
-    // Load tomorrow's tasks with smart categorization
-    const tomorrowCategorized = categorizeTasks(tomorrowTasks);
-    
-    if (tomorrowCategorized.active.length > 0) {
-      tomorrowCategorized.active.forEach((task) => {
-        const taskElement = createUiverseTaskElement(task);
-        tomorrowTasksList.appendChild(taskElement);
-      });
-    }
-    
-    // Always show separator if completed tasks exist
-    if (tomorrowCategorized.completed.length > 0) {
-      // Add separator if there are active tasks
-      if (tomorrowCategorized.active.length > 0) {
-        const separator = createCompletedSeparator();
-        tomorrowTasksList.appendChild(separator);
-      }
-      
-      // Only show completed tasks if not hidden
-      if (showUiverseCompleted) {
-        tomorrowCategorized.completed.forEach((task) => {
-          const taskElement = createUiverseTaskElement(task);
-          tomorrowTasksList.appendChild(taskElement);
-        });
-      }
-    }
-    
-    checkUiverseEmpty();
+  const tasks = getUiverseTasks();
+  todayTasksList.innerHTML = '';
+  tomorrowTasksList.innerHTML = '';
+  
+  // Apply filters
+  let filteredTasks = tasks;
+  
+  // Search filter
+  if (searchQuery) {
+    filteredTasks = filteredTasks.filter(task => 
+      task.text.toLowerCase().includes(searchQuery.toLowerCase())
+    );
   }
+  
+  // Priority filter
+  if (currentFilter !== 'all') {
+    filteredTasks = filteredTasks.filter(task => task.priority === currentFilter);
+  }
+  
+  // Separate by completion status
+  const activeTasks = filteredTasks.filter(t => !t.completed);
+  
+  // Render active tasks (Today/Tomorrow)
+  const todayActive = activeTasks.filter(t => t.dueDate === 'today');
+  const tomorrowActive = activeTasks.filter(t => t.dueDate === 'tomorrow');
+  
+  todayActive.forEach(task => {
+    const taskElement = createUiverseTaskElement(task);
+    todayTasksList.appendChild(taskElement);
+  });
+  
+  tomorrowActive.forEach(task => {
+    const taskElement = createUiverseTaskElement(task);
+    tomorrowTasksList.appendChild(taskElement);
+  });
+  
+  // Render completed tasks (grouped by date)
+  if (window.renderGroupedCompletedTasks) {
+    window.renderGroupedCompletedTasks();
+  }
+  
+  // Update empty states
+  checkTasksEmpty();
+}
+  
+  // Expose globally for subtasks module
+  window.loadUiverseTasks = loadUiverseTasks;
 
   function loadNotes() {
     const notes = getNotes();
@@ -962,49 +950,97 @@ function initializeApp() {
     }
   }
 
-  function checkUiverseEmpty() {
-    const todayTasks = todayTasksList.querySelectorAll('.sketchy-task-container');
-    const tomorrowTasks = tomorrowTasksList.querySelectorAll('.sketchy-task-container');
-    
-    // Show/hide individual empty states
-    if (todayTasks.length === 0) {
-      todayEmptyState.classList.remove('hidden');
-    } else {
-      todayEmptyState.classList.add('hidden');
-    }
-    
-    if (tomorrowTasks.length === 0) {
-      tomorrowEmptyState.classList.remove('hidden');
-    } else {
-      tomorrowEmptyState.classList.add('hidden');
-    }
-    
-    // Show overall empty state only if both sections are empty
-    if (todayTasks.length === 0 && tomorrowTasks.length === 0) {
-      uiverseEmptyState.classList.remove('hidden');
-    } else {
-      uiverseEmptyState.classList.add('hidden');
-    }
+  function checkTasksEmpty() {
+  const tasks = getUiverseTasks();
+  const activeTasks = tasks.filter(t => !t.completed);
+  const completedTasks = tasks.filter(t => t.completed);
+  
+  const todayActive = activeTasks.filter(t => t.dueDate === 'today');
+  const tomorrowActive = activeTasks.filter(t => t.dueDate === 'tomorrow');
+  const todayCompleted = completedTasks.filter(t => t.dueDate === 'today');
+  const tomorrowCompleted = completedTasks.filter(t => t.dueDate === 'tomorrow');
+  
+  // Today empty state (active)
+  const todayEmpty = document.getElementById('today-empty-state');
+  if (todayEmpty) {
+    todayEmpty.classList.toggle('hidden', todayActive.length > 0);
   }
+  
+  // Tomorrow empty state (active)
+  const tomorrowEmpty = document.getElementById('tomorrow-empty-state');
+  if (tomorrowEmpty) {
+    tomorrowEmpty.classList.toggle('hidden', tomorrowActive.length > 0);
+  }
+  
+  // Active tab empty state
+  const activeEmpty = document.getElementById('active-empty-state');
+  if (activeEmpty) {
+    activeEmpty.classList.toggle('hidden', activeTasks.length > 0);
+  }
+  
+  // Completed today empty state
+  const completedTodayEmpty = document.getElementById('completed-today-empty');
+  if (completedTodayEmpty) {
+    completedTodayEmpty.classList.toggle('hidden', todayCompleted.length > 0);
+  }
+  
+  // Completed tomorrow empty state
+  const completedTomorrowEmpty = document.getElementById('completed-tomorrow-empty');
+  if (completedTomorrowEmpty) {
+    completedTomorrowEmpty.classList.toggle('hidden', tomorrowCompleted.length > 0);
+  }
+  
+  // Completed tab empty state
+  const completedEmpty = document.getElementById('completed-empty-state');
+  if (completedEmpty) {
+    completedEmpty.classList.toggle('hidden', completedTasks.length > 0);
+  }
+}
 
   
   function updateStats() {
     const tasks = getUiverseTasks();
-    const total = tasks.length;
-    const completed = tasks.filter(t => t.completed).length;
-    const active = total - completed;
+    
+    // Helper to count all tasks including subtasks
+    function countAllTasks(taskList) {
+      let total = 0;
+      let completed = 0;
+      
+      taskList.forEach(task => {
+        // Count main task
+        total++;
+        if (task.completed) completed++;
+        
+        // Count subtasks
+        if (task.subtasks && task.subtasks.length > 0) {
+          task.subtasks.forEach(subtask => {
+            total++;
+            if (subtask.completed) completed++;
+          });
+        }
+      });
+      
+      return { total, completed };
+    }
+    
+    const counts = countAllTasks(tasks);
+    const active = counts.total - counts.completed;
     
     const totalEl = document.getElementById('total-tasks-count');
     const activeEl = document.getElementById('active-tasks-count');
     const completedEl = document.getElementById('completed-tasks-count');
     
-    if (totalEl) totalEl.textContent = total;
+    if (totalEl) totalEl.textContent = counts.total;
     if (activeEl) activeEl.textContent = active;
-    if (completedEl) completedEl.textContent = completed;
+    if (completedEl) completedEl.textContent = counts.completed;
   }
+  
+  // Expose globally for subtasks module
+  window.updateStats = updateStats;
   
   function handleSearch(e) {
     searchQuery = e.target.value.trim();
+    window.searchQuery = searchQuery; // Update global
     loadUiverseTasks();
   }
   
@@ -1022,6 +1058,7 @@ function initializeApp() {
     
     // Set filter
     currentFilter = filterBtn.dataset.filter;
+    window.currentFilter = currentFilter; // Expose globally for completed grouping
     loadUiverseTasks();
   }
   
@@ -1160,9 +1197,38 @@ function initializeApp() {
     }
   }
 
-  // Event listeners
-  addTaskBtn.addEventListener('click', addTask);
-  toggleReorderBtn.addEventListener('click', toggleReorderMode);
+  // Event listeners (only if task elements exist)
+  if (addTaskBtn) {
+    addTaskBtn.addEventListener('click', addTask);
+  }
+  
+  if (toggleReorderBtn) {
+    toggleReorderBtn.addEventListener('click', toggleReorderMode);
+  }
+  
+  // Tab switching
+  const activeTab = document.getElementById('active-tab');
+  const completedTab = document.getElementById('completed-tab');
+  const activeView = document.getElementById('active-tasks-view');
+  const completedView = document.getElementById('completed-tasks-view');
+
+  if (activeTab && completedTab && activeView && completedView) {
+    activeTab.addEventListener('click', () => {
+      currentTab = 'active';
+      activeTab.classList.add('active');
+      completedTab.classList.remove('active');
+      activeView.classList.add('active');
+      completedView.classList.remove('active');
+    });
+    
+    completedTab.addEventListener('click', () => {
+      currentTab = 'completed';
+      completedTab.classList.add('active');
+      activeTab.classList.remove('active');
+      completedView.classList.add('active');
+      activeView.classList.remove('active');
+    });
+  }
   
   // Undo/Redo buttons
   const undoBtn = document.getElementById('undo-btn');
@@ -1263,27 +1329,35 @@ function initializeApp() {
     btn.addEventListener('click', handleFilterClick);
   });
   
-  newTaskInput.addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-      addTask();
-    }
-  });
+  if (newTaskInput) {
+    newTaskInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        addTask();
+      }
+    });
+  }
 
-  // Notes event listeners
-  addNoteBtn.addEventListener('click', showNoteForm);
-  cancelNoteBtn.addEventListener('click', hideNoteForm);
-  saveNoteBtn.addEventListener('click', saveNote);
+  // Notes event listeners (only if notes elements exist)
+  if (addNoteBtn && noteForm && noteTitleInput && noteContentInput && saveNoteBtn && cancelNoteBtn && notesList && notesEmptyState) {
+    addNoteBtn.addEventListener('click', showNoteForm);
+    cancelNoteBtn.addEventListener('click', hideNoteForm);
+    saveNoteBtn.addEventListener('click', saveNote);
 
-  // Save note on Ctrl+Enter
-  noteContentInput.addEventListener('keypress', function(e) {
-    if (e.key === 'Enter' && e.ctrlKey) {
-      saveNote();
-    }
-  });
+    // Save note on Ctrl+Enter
+    noteContentInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter' && e.ctrlKey) {
+        saveNote();
+      }
+    });
+    
+    // Load notes
+    loadNotes();
+  }
 
   // Load data on page load
-  loadUiverseTasks();
-  loadNotes();
+  if (todayTasksList && tomorrowTasksList) {
+    loadUiverseTasks();
+  }
   
   // Initialize history with current state
   // Don't call addToHistory here - it will be called on first action
@@ -1400,6 +1474,7 @@ function celebrateTaskCompletion(element) {
 }
 
 // Expose toast globally
+window.showToast = showToast;
 window.showToast = showToast;
 
 // === Overdue Tasks Alert ===

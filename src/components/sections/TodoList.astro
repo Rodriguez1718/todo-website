@@ -1,7 +1,6 @@
 ---
 // Todo List section with handwritten notebook style
 import ToDo from "../layout/ToDo.astro";
-import Notes from "../layout/Notes.astro";
 import CheckIcon from "../icons/CheckIcon.astro";
 ---
 
@@ -30,14 +29,13 @@ import CheckIcon from "../icons/CheckIcon.astro";
 
     <!-- ToDo Component -->
     <ToDo />
-
-    <!-- Notes Component -->
-    <Notes />
   </div>
 </section>
 
 <script>
   import '/src/script/script.js';
+  import '/src/script/subtasks.js';
+  import '/src/script/completed-grouping.js';
 </script>
 
 

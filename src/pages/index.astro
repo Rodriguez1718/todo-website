@@ -1,13 +1,22 @@
 ---
-import Hero from "../components/layout/Hero.astro"
-import BaseLayout from "../layouts/BaseLayout.astro"
-import TodoList from "../components/sections/TodoList.astro"
-
-const title = "TodoList - Simple Task Management App";
-const description = "A clean, simple to-do list application to organize your daily tasks and boost productivity. Create, manage, and track your tasks effortlessly.";
+// Redirect to login if not authenticated
 ---
 
-<BaseLayout title={title} description={description}>
-	<Hero />
-    <TodoList />
-</BaseLayout>
+<script>
+  import { auth } from '../lib/supabase';
+
+  // Check auth and redirect
+  auth.getSession().then(({ data }) => {
+    if (data.session) {
+      // Logged in, go to tasks
+      window.location.href = '/tasks';
+    } else {
+      // Not logged in, go to login
+      window.location.href = '/login';
+    }
+  });
+</script>
+
+<div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; font-family: 'Kalam', cursive; color: #78350f;">
+  <p>Redirecting...</p>
+</div>

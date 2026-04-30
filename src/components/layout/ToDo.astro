@@ -233,56 +233,127 @@ import EmptyLargeIcon from "../icons/EmptyLargeIcon.astro";
     </div>
   </div>
   
-  <!-- Today's Tasks -->
-  <div class="mb-8">
-    <h3 id="today-tasks-heading" class="text-lg font-bold text-amber-900 handwritten mb-4 flex items-center gap-2">
-      <HomeIcon width={20} height={20} class="text-amber-700" ariaHidden={true} />
-      Today
-    </h3>
-    <ul 
-      id="today-tasks-list" 
-      class="space-y-2"
-      role="list"
-      aria-labelledby="today-tasks-heading"
-      aria-live="polite"
-      aria-relevant="additions removals"
-    >
-      <!-- Today's tasks will be loaded here -->
-    </ul>
-    <div id="today-empty-state" class="text-center py-8 text-amber-600 handwritten hidden" role="status" aria-live="polite">
-      <EmptyIcon width={48} height={48} class="mx-auto mb-3 text-amber-500" ariaHidden={true} />
-      <p class="text-base">No tasks for today</p>
+  <!-- Task Tabs -->
+  <div class="task-tabs mb-6">
+    <button 
+      id="active-tab"
+      class="task-tab active"
+      data-tab="active"
+      type="button">
+      Active
+    </button>
+    <button 
+      id="completed-tab"
+      class="task-tab"
+      data-tab="completed"
+      type="button">
+      Completed
+    </button>
+    <div class="task-tab-indicator"></div>
+  </div>
+  
+  <!-- Active Tasks View -->
+  <div id="active-tasks-view" class="task-view active">
+    <!-- Today's Tasks -->
+    <div class="mb-8">
+      <h3 id="today-tasks-heading" class="text-lg font-bold text-amber-900 handwritten mb-4 flex items-center gap-2">
+        <HomeIcon width={20} height={20} class="text-amber-700" ariaHidden={true} />
+        Today
+      </h3>
+      <ul 
+        id="today-tasks-list" 
+        class="space-y-2"
+        role="list"
+        aria-labelledby="today-tasks-heading"
+        aria-live="polite"
+        aria-relevant="additions removals"
+      >
+        <!-- Today's tasks will be loaded here -->
+      </ul>
+      <div id="today-empty-state" class="text-center py-8 text-amber-600 handwritten hidden" role="status" aria-live="polite">
+        <EmptyIcon width={48} height={48} class="mx-auto mb-3 text-amber-500" ariaHidden={true} />
+        <p class="text-base">No tasks for today</p>
+      </div>
+    </div>
+
+    <!-- Tomorrow's Tasks -->
+    <div class="mb-6">
+      <h3 id="tomorrow-tasks-heading" class="text-lg font-bold text-amber-900 handwritten mb-4 flex items-center gap-2">
+        <ClockIcon width={20} height={20} class="text-amber-700" ariaHidden={true} />
+        Tomorrow
+      </h3>
+      <ul 
+        id="tomorrow-tasks-list" 
+        class="space-y-2"
+        role="list"
+        aria-labelledby="tomorrow-tasks-heading"
+        aria-live="polite"
+        aria-relevant="additions removals"
+      >
+        <!-- Tomorrow's tasks will be loaded here -->
+      </ul>
+      <div id="tomorrow-empty-state" class="text-center py-8 text-amber-600 handwritten hidden" role="status" aria-live="polite">
+        <EmptyIcon width={48} height={48} class="mx-auto mb-3 text-amber-500" ariaHidden={true} />
+        <p class="text-base">No tasks for tomorrow</p>
+      </div>
+    </div>
+
+    <!-- Empty state for active tasks -->
+    <div id="active-empty-state" class="text-center py-12 hidden" role="status" aria-live="polite">
+      <EmptyLargeIcon width={96} height={96} class="mx-auto mb-6 text-amber-500" ariaHidden={true} />
+      <p class="text-amber-700 text-xl handwritten">
+        No active tasks. Add your first task above!
+      </p>
     </div>
   </div>
-
-  <!-- Tomorrow's Tasks -->
-  <div class="mb-6">
-    <h3 id="tomorrow-tasks-heading" class="text-lg font-bold text-amber-900 handwritten mb-4 flex items-center gap-2">
-      <ClockIcon width={20} height={20} class="text-amber-700" ariaHidden={true} />
-      Tomorrow
-    </h3>
-    <ul 
-      id="tomorrow-tasks-list" 
-      class="space-y-2"
-      role="list"
-      aria-labelledby="tomorrow-tasks-heading"
-      aria-live="polite"
-      aria-relevant="additions removals"
-    >
-      <!-- Tomorrow's tasks will be loaded here -->
-    </ul>
-    <div id="tomorrow-empty-state" class="text-center py-8 text-amber-600 handwritten hidden" role="status" aria-live="polite">
-      <EmptyIcon width={48} height={48} class="mx-auto mb-3 text-amber-500" ariaHidden={true} />
-      <p class="text-base">No tasks for tomorrow</p>
+  
+  <!-- Completed Tasks View -->
+  <div id="completed-tasks-view" class="task-view">
+    <!-- Time period filter -->
+    <div class="flex flex-wrap gap-2 mb-6">
+      <span class="text-sm text-amber-900 handwritten font-semibold">Group by:</span>
+      <button 
+        id="filter-day-btn"
+        type="button"
+        class="time-filter-btn active"
+        data-period="day">
+        Day
+      </button>
+      <button 
+        id="filter-week-btn"
+        type="button"
+        class="time-filter-btn"
+        data-period="week">
+        Week
+      </button>
+      <button 
+        id="filter-month-btn"
+        type="button"
+        class="time-filter-btn"
+        data-period="month">
+        Month
+      </button>
+      <button 
+        id="filter-year-btn"
+        type="button"
+        class="time-filter-btn"
+        data-period="year">
+        Year
+      </button>
     </div>
-  </div>
 
-  <!-- Empty state for all tasks -->
-  <div id="uiverse-empty-state" class="text-center py-12 hidden" role="status" aria-live="polite">
-    <EmptyLargeIcon width={96} height={96} class="mx-auto mb-6 text-amber-500" ariaHidden={true} />
-    <p class="text-amber-700 text-xl handwritten">
-      No tasks yet. Add your first task above!
-    </p>
+    <!-- Completed tasks grouped by date -->
+    <div id="completed-tasks-grouped">
+      <!-- Will be populated by JavaScript -->
+    </div>
+    
+    <!-- Empty state for completed tasks -->
+    <div id="completed-empty-state" class="text-center py-12 hidden" role="status" aria-live="polite">
+      <EmptyLargeIcon width={96} height={96} class="mx-auto mb-6 text-amber-500" ariaHidden={true} />
+      <p class="text-amber-700 text-xl handwritten">
+        No completed tasks yet. Complete a task to see it here!
+      </p>
+    </div>
   </div>
 
   <!-- SVG filter for handwritten effect - Original Uiverse -->
