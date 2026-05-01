@@ -38,10 +38,19 @@ import CheckIcon from "../icons/CheckIcon.astro";
   import '/src/script/subtasks.js';
   import '/src/script/completed-grouping.js';
   
-  // Initialize Supabase sync after page load
+  // Initialize Supabase sync BEFORE app loads
   document.addEventListener('DOMContentLoaded', async () => {
+    console.log('TodoList: Initializing Supabase sync...');
+    
     if ((window as any).supabaseSync) {
       await (window as any).supabaseSync.initializeSync();
+      console.log('TodoList: Supabase sync complete');
+    }
+    
+    // Now initialize app with fresh data
+    if ((window as any).initializeApp) {
+      console.log('TodoList: Initializing app...');
+      (window as any).initializeApp();
     }
   });
 </script>

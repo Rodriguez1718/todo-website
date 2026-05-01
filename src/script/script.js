@@ -274,12 +274,12 @@ document.addEventListener('DOMContentLoaded', async function() {
   // Check and migrate tasks on page load
   await checkAndMigrateTasks();
   
-  // Add a small delay to ensure all components are rendered
-  setTimeout(function() {
-    console.log('Initializing app after delay');
-    initializeApp();
-  }, 100);
+  // Don't auto-initialize - let TodoList.astro control initialization after sync
+  console.log('script.js loaded, waiting for TodoList to initialize...');
 });
+
+// Expose initializeApp globally for TodoList.astro
+window.initializeApp = initializeApp;
 
 // Make getUiverseTasks async to support Supabase
 async function getUiverseTasks() {
