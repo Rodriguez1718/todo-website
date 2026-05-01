@@ -901,8 +901,25 @@ container.innerHTML = `
   todayTasksList.innerHTML = '';
   tomorrowTasksList.innerHTML = '';
   
+  // Flatten tasks to include subtasks
+  function flattenTasks(taskList) {
+    const flat = [];
+    function flatten(tasks) {
+      tasks.forEach(task => {
+        flat.push(task);
+        if (task.subtasks && task.subtasks.length > 0) {
+          flatten(task.subtasks);
+        }
+      });
+    }
+    flatten(taskList);
+    return flat;
+  }
+  
+  const allTasks = flattenTasks(tasks);
+  
   // Apply filters
-  let filteredTasks = tasks;
+  let filteredTasks = allTasks;
   
   // Search filter
   if (searchQuery) {
