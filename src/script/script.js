@@ -674,30 +674,55 @@ container.innerHTML = `
     // Add change event listener for checkbox
     const checkbox = container.querySelector('input[type="checkbox"]');
     checkbox.addEventListener('change', async () => {
-      const tasks = await getUiverseTasks();
-      const taskIndex = tasks.findIndex((t) => t.id === task.id);
-      if (taskIndex !== -1) {
-        tasks[taskIndex].completed = checkbox.checked;
-        tasks[taskIndex].completedAt = checkbox.checked ? new Date().toISOString() : null;
-        await saveUiverseTasks(tasks);
-        
-        // Update ARIA
-        checkbox.setAttribute('aria-checked', checkbox.checked);
-        
-        // Update the container class
-        container.className = `sketchy-task-container ${checkbox.checked ? 'completed' : 'active'}`;
-        
-        // Celebration and toast on completion
-        if (checkbox.checked) {
-          celebrateTaskCompletion(container);
-          showToast('Task completed!', 'success', 2000);
-        } else {
-          showToast('Task reopened', 'info', 2000);
+      // Disable checkbox during save
+      checkbox.disabled = true;
+      
+      // Show inline spinner
+      const checkboxParent = checkbox.parentElement;
+      const spinner = document.createElement('div');
+      spinner.className = 'inline-spinner';
+      spinner.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="10" opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/></svg>';
+      spinner.style.cssText = 'position: absolute; left: 0; top: 50%; transform: translateY(-50%);';
+      checkboxParent.style.position = 'relative';
+      checkbox.style.opacity = '0';
+      checkboxParent.appendChild(spinner);
+      
+      try {
+        const tasks = await getUiverseTasks();
+        const taskIndex = tasks.findIndex((t) => t.id === task.id);
+        if (taskIndex !== -1) {
+          tasks[taskIndex].completed = checkbox.checked;
+          tasks[taskIndex].completedAt = checkbox.checked ? new Date().toISOString() : null;
+          await saveUiverseTasks(tasks);
+          
+          // Update ARIA
+          checkbox.setAttribute('aria-checked', checkbox.checked);
+          
+          // Update the container class
+          container.className = `sketchy-task-container ${checkbox.checked ? 'completed' : 'active'}`;
+          
+          // Celebration and toast on completion
+          if (checkbox.checked) {
+            celebrateTaskCompletion(container);
+            showToast('Task completed!', 'success', 2000);
+          } else {
+            showToast('Task reopened', 'info', 2000);
+          }
+          
+          // Refresh the display
+          await loadUiverseTasks();
+          updateStats();
         }
-        
-        // Refresh the display
-        await loadUiverseTasks();
-        updateStats();
+      } catch (error) {
+        console.error('Failed to toggle task:', error);
+        // Revert checkbox on error
+        checkbox.checked = !checkbox.checked;
+        showToast('Failed to update task', 'error', 3000);
+      } finally {
+        // Remove spinner and restore checkbox
+        spinner.remove();
+        checkbox.style.opacity = '1';
+        checkbox.disabled = false;
       }
     });
     
@@ -911,25 +936,8 @@ container.innerHTML = `
   todayTasksList.innerHTML = '';
   tomorrowTasksList.innerHTML = '';
   
-  // Flatten tasks to include subtasks
-  function flattenTasks(taskList) {
-    const flat = [];
-    function flatten(tasks) {
-      tasks.forEach(task => {
-        flat.push(task);
-        if (task.subtasks && task.subtasks.length > 0) {
-          flatten(task.subtasks);
-        }
-      });
-    }
-    flatten(taskList);
-    return flat;
-  }
-  
-  const allTasks = flattenTasks(tasks);
-  
-  // Apply filters
-  let filteredTasks = allTasks;
+  // Apply filters to root tasks only (subtasks render inside parent)
+  let filteredTasks = tasks;
   
   // Search filter
   if (searchQuery) {
@@ -991,32 +999,38 @@ container.innerHTML = `
     const category = document.getElementById('task-category')?.value || '';
     
     if (taskText && selectedDate) {
-      const tasks = await getUiverseTasks();
-      const newTask = {
-        id: generateUUID(),
-        text: taskText,
-        completed: false,
-        createdAt: new Date().toISOString(),
-        completedAt: null,
-        dueDate: selectedDate.value,
-        priority: priority,
-        category: category
-      };
-      tasks.push(newTask);
-      await saveUiverseTasks(tasks);
-      newTaskInput.value = '';
+      const loadingToast = window.showLoadingToast('Adding task...');
       
-      // Reset form
-      const todayRadio = document.querySelector('input[name="task-date"][value="today"]');
-      if (todayRadio) todayRadio.checked = true;
-      if (document.getElementById('task-priority')) document.getElementById('task-priority').value = 'none';
-      if (document.getElementById('task-category')) document.getElementById('task-category').value = '';
+      try {
+        const tasks = await getUiverseTasks();
+        const newTask = {
+          id: generateUUID(),
+          text: taskText,
+          completed: false,
+          createdAt: new Date().toISOString(),
+          completedAt: null,
+          dueDate: selectedDate.value,
+          priority: priority,
+          category: category
+        };
+        tasks.push(newTask);
+        await saveUiverseTasks(tasks);
+        newTaskInput.value = '';
+        
+        window.hideLoadingToast(loadingToast, 'Task added!', 'success', 2000);
       
-      await loadUiverseTasks();
-      updateStats();
-      
-      // Show success toast
-      showToast(`Task added to ${selectedDate.value}!`, 'success', 2000);
+        // Reset form
+        const todayRadio = document.querySelector('input[name="task-date"][value="today"]');
+        if (todayRadio) todayRadio.checked = true;
+        if (document.getElementById('task-priority')) document.getElementById('task-priority').value = 'none';
+        if (document.getElementById('task-category')) document.getElementById('task-category').value = '';
+        
+        await loadUiverseTasks();
+        updateStats();
+      } catch (error) {
+        console.error('Failed to add task:', error);
+        window.hideLoadingToast(loadingToast, 'Failed to add task', 'error', 3000);
+      }
     }
   }
 
@@ -1471,31 +1485,58 @@ function showToast(message, type = 'success', duration = 3000) {
   const icons = {
     success: '✓',
     error: '✕',
-    info: 'i'
+    info: 'i',
+    loading: '<svg class="loading-spinner" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="10" opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/></svg>'
   };
   
   const ariaLabels = {
     success: 'Success notification',
     error: 'Error notification',
-    info: 'Information notification'
+    info: 'Information notification',
+    loading: 'Loading notification'
   };
   
   toast.setAttribute('aria-label', ariaLabels[type] || ariaLabels.info);
   
+  const icon = icons[type] || icons.info;
+  const iconHtml = type === 'loading' ? icon : `<div class="toast-icon" aria-hidden="true">${icon}</div>`;
+  
   toast.innerHTML = `
     <div style="display: flex; align-items: center; gap: 0.75rem; padding-left: 0.5rem;">
-      <div class="toast-icon" aria-hidden="true">${icons[type] || icons.info}</div>
+      ${iconHtml}
       <span class="toast-message">${message}</span>
     </div>
   `;
   
   container.appendChild(toast);
   
-  setTimeout(() => {
-    toast.classList.add('toast-hide');
-    setTimeout(() => toast.remove(), 300);
-  }, duration);
+  // Don't auto-hide loading toasts
+  if (type !== 'loading' && duration > 0) {
+    setTimeout(() => {
+      toast.classList.add('toast-hide');
+      setTimeout(() => toast.remove(), 300);
+    }, duration);
+  }
+  
+  return toast; // Return toast element for manual control
 }
+
+// Show loading toast
+window.showLoadingToast = function(message = 'Loading...') {
+  return showToast(message, 'loading', 0);
+};
+
+// Hide loading toast and show result
+window.hideLoadingToast = function(loadingToast, message, type = 'success', duration = 3000) {
+  if (loadingToast && loadingToast.parentNode) {
+    loadingToast.classList.add('toast-hide');
+    setTimeout(() => loadingToast.remove(), 300);
+  }
+  
+  if (message) {
+    setTimeout(() => showToast(message, type, duration), 200);
+  }
+};
 
 // === Task Completion Celebration ===
 function celebrateTaskCompletion(element) {

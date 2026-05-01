@@ -13,72 +13,122 @@
     });
   }
 
+  // Find task recursively (including nested subtasks)
+  function findTaskRecursive(tasks, taskId) {
+    for (const task of tasks) {
+      if (task.id === taskId) return task;
+      if (task.subtasks && task.subtasks.length > 0) {
+        const found = findTaskRecursive(task.subtasks, taskId);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+
   // Add subtask to parent task
   window.addSubtask = async function(parentId, subtaskText) {
-    const tasks = await window.getUiverseTasks();
-    const parentTask = tasks.find(t => t.id === parentId);
+    const loadingToast = window.showLoadingToast('Adding subtask...');
     
-    if (!parentTask) return;
-    
-    const subtask = {
-      id: generateUUID(),
-      text: subtaskText,
-      completed: false,
-      createdAt: new Date().toISOString(),
-      completedAt: null,
-      dueDate: parentTask.dueDate || 'today',
-      priority: 'none',
-      category: parentTask.category || '',
-      parentId: parentId,
-      order: (parentTask.subtasks || []).length
-    };
-    
-    if (!parentTask.subtasks) {
-      parentTask.subtasks = [];
+    try {
+      const tasks = await window.getUiverseTasks();
+      const parentTask = findTaskRecursive(tasks, parentId);
+      
+      if (!parentTask) {
+        console.error('Parent task not found:', parentId);
+        window.hideLoadingToast(loadingToast, 'Parent task not found', 'error', 3000);
+        return;
+      }
+      
+      const subtask = {
+        id: generateUUID(),
+        text: subtaskText,
+        completed: false,
+        createdAt: new Date().toISOString(),
+        completedAt: null,
+        dueDate: parentTask.dueDate || 'today',
+        priority: 'none',
+        category: parentTask.category || '',
+        parent_id: parentId, // Use parent_id for Supabase
+        order: (parentTask.subtasks || []).length
+      };
+      
+      if (!parentTask.subtasks) {
+        parentTask.subtasks = [];
+      }
+      
+      parentTask.subtasks.push(subtask);
+      await window.saveUiverseTasks(tasks);
+      await window.loadUiverseTasks();
+      if (window.updateStats) window.updateStats();
+      
+      window.hideLoadingToast(loadingToast, 'Subtask added', 'success', 1500);
+    } catch (error) {
+      console.error('Failed to add subtask:', error);
+      window.hideLoadingToast(loadingToast, 'Failed to add subtask', 'error', 3000);
     }
-    
-    parentTask.subtasks.push(subtask);
-    await window.saveUiverseTasks(tasks);
-    await window.loadUiverseTasks();
-    if (window.updateStats) window.updateStats();
-    window.showToast('Subtask added', 'success', 1500);
   };
 
   // Toggle subtask completion
   window.toggleSubtask = async function(parentId, subtaskId) {
-    const tasks = await window.getUiverseTasks();
-    const parentTask = tasks.find(t => t.id === parentId);
+    const loadingToast = window.showLoadingToast('Updating...');
     
-    if (!parentTask || !parentTask.subtasks) return;
-    
-    const subtask = parentTask.subtasks.find(st => st.id === subtaskId);
-    if (!subtask) return;
-    
-    subtask.completed = !subtask.completed;
-    subtask.completedAt = subtask.completed ? new Date().toISOString() : null;
-    
-    await window.saveUiverseTasks(tasks);
-    await window.loadUiverseTasks();
-    if (window.updateStats) window.updateStats();
-    
-    if (subtask.completed) {
-      window.showToast('Subtask completed!', 'success', 1500);
+    try {
+      const tasks = await window.getUiverseTasks();
+      const parentTask = findTaskRecursive(tasks, parentId);
+      
+      if (!parentTask || !parentTask.subtasks) {
+        window.hideLoadingToast(loadingToast);
+        return;
+      }
+      
+      const subtask = parentTask.subtasks.find(st => st.id === subtaskId);
+      if (!subtask) {
+        window.hideLoadingToast(loadingToast);
+        return;
+      }
+      
+      subtask.completed = !subtask.completed;
+      subtask.completedAt = subtask.completed ? new Date().toISOString() : null;
+      
+      await window.saveUiverseTasks(tasks);
+      await window.loadUiverseTasks();
+      if (window.updateStats) window.updateStats();
+      
+      if (subtask.completed) {
+        window.hideLoadingToast(loadingToast, 'Subtask completed!', 'success', 1500);
+      } else {
+        window.hideLoadingToast(loadingToast);
+      }
+    } catch (error) {
+      console.error('Failed to toggle subtask:', error);
+      window.hideLoadingToast(loadingToast, 'Failed to update subtask', 'error', 3000);
     }
   };
 
   // Delete subtask
   window.deleteSubtask = async function(parentId, subtaskId) {
-    const tasks = await window.getUiverseTasks();
-    const parentTask = tasks.find(t => t.id === parentId);
+    const loadingToast = window.showLoadingToast('Deleting...');
     
-    if (!parentTask || !parentTask.subtasks) return;
-    
-    parentTask.subtasks = parentTask.subtasks.filter(st => st.id !== subtaskId);
-    
-    await window.saveUiverseTasks(tasks);
-    await window.loadUiverseTasks();
-    if (window.updateStats) window.updateStats();
-    window.showToast('Subtask deleted', 'info', 1500);
+    try {
+      const tasks = await window.getUiverseTasks();
+      const parentTask = findTaskRecursive(tasks, parentId);
+      
+      if (!parentTask || !parentTask.subtasks) {
+        window.hideLoadingToast(loadingToast);
+        return;
+      }
+      
+      parentTask.subtasks = parentTask.subtasks.filter(st => st.id !== subtaskId);
+      
+      await window.saveUiverseTasks(tasks);
+      await window.loadUiverseTasks();
+      if (window.updateStats) window.updateStats();
+      
+      window.hideLoadingToast(loadingToast, 'Subtask deleted', 'info', 1500);
+    } catch (error) {
+      console.error('Failed to delete subtask:', error);
+      window.hideLoadingToast(loadingToast, 'Failed to delete subtask', 'error', 3000);
+    }
   };
 
   // Get subtask progress

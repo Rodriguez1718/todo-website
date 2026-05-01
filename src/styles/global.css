@@ -948,6 +948,42 @@ section:last-of-type::after {
   border-radius: 12px 0 0 12px;
 }
 
+.toast.toast-loading {
+  border-color: rgba(217, 119, 6, 0.3);
+  background: rgba(255, 251, 235, 0.95);
+}
+
+.toast.toast-loading::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, #d97706, #f59e0b);
+  border-radius: 12px 0 0 12px;
+}
+
+.loading-spinner {
+  animation: spin 1s linear infinite;
+  flex-shrink: 0;
+}
+
+.inline-spinner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.inline-spinner svg {
+  animation: spin 1s linear infinite;
+  color: #d97706;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
 .toast.toast-hide {
   animation: toast-slide-out 0.3s cubic-bezier(0.4, 0, 1, 1) forwards;
 }
