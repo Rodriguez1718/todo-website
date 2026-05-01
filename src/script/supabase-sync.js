@@ -4,6 +4,15 @@ import { supabase, auth, tasks as taskOps, notes as noteOps } from '../lib/supab
 let currentUser = null;
 let syncEnabled = false;
 
+// Generate UUID v4
+function generateUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
 // Initialize sync system
 export async function initializeSync() {
   try {
@@ -51,7 +60,7 @@ async function migrateLocalStorageToSupabase() {
         
         // Convert localStorage format to Supabase format
         const supabaseTasks = tasks.map(task => ({
-          id: task.id,
+          id: generateUUID(), // Generate new UUID instead of using timestamp
           user_id: currentUser.id,
           parent_id: task.parent_id || null,
           text: task.text,
@@ -84,7 +93,7 @@ async function migrateLocalStorageToSupabase() {
         console.log(`Migrating ${notes.length} notes to Supabase...`);
         
         const supabaseNotes = notes.map(note => ({
-          id: note.id,
+          id: generateUUID(), // Generate new UUID
           user_id: currentUser.id,
           title: note.title,
           content: note.content,

@@ -1,5 +1,15 @@
 // Sample data (inline since imports don't work in client scripts)
 console.log('Script loaded successfully!');
+
+// UUID generator
+function generateUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
 const sampleTasks = [
   {
     id: "1647123456789",
@@ -983,7 +993,7 @@ container.innerHTML = `
     if (taskText && selectedDate) {
       const tasks = await getUiverseTasks();
       const newTask = {
-        id: Date.now().toString(),
+        id: generateUUID(),
         text: taskText,
         completed: false,
         createdAt: new Date().toISOString(),
@@ -1230,7 +1240,7 @@ container.innerHTML = `
     if (title && content) {
       const notes = await getNotes();
       const newNote = {
-        id: Date.now().toString(),
+        id: generateUUID(),
         title: title,
         content: content,
         createdAt: new Date().toISOString()
