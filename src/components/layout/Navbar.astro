@@ -233,6 +233,8 @@ const currentPath = new URL(Astro.url).pathname;
 
       document.getElementById('signout-btn')?.addEventListener('click', async () => {
         await auth.signOut();
+        // Clear localStorage on logout to prevent data leakage between accounts
+        localStorage.clear();
         window.location.href = '/';
       });
     } else {

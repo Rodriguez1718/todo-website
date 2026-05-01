@@ -20,6 +20,24 @@ export async function initializeSync() {
     const session = data.session;
     
     if (session) {
+      const newUserId = session.user.id;
+      const lastUserId = localStorage.getItem('last_user_id');
+      
+      // If user changed, clear localStorage to prevent data leakage
+      if (lastUserId && lastUserId !== newUserId) {
+        console.log('User changed, clearing localStorage');
+        const keysToKeep = ['last_user_id'];
+        const allKeys = Object.keys(localStorage);
+        allKeys.forEach(key => {
+          if (!keysToKeep.includes(key)) {
+            localStorage.removeItem(key);
+          }
+        });
+      }
+      
+      // Store current user ID
+      localStorage.setItem('last_user_id', newUserId);
+      
       currentUser = session.user;
       syncEnabled = true;
       console.log('Supabase sync enabled for user:', currentUser.id);
