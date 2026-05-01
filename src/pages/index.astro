@@ -9,10 +9,10 @@
   auth.getSession().then(({ data }) => {
     if (data.session) {
       // Logged in, go to tasks
-      window.location.href = '/tasks';
+      window.location.replace('/tasks');
     } else {
       // Not logged in, go to login
-      window.location.href = '/login';
+      window.location.replace('/login');
     }
   });
 </script>

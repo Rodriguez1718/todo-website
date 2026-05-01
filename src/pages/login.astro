@@ -662,7 +662,7 @@ const pageDescription = "Sign in to your TodoList account to access your tasks f
       // Migrate localStorage tasks if any
       await migrateLocalStorageTasks(data.user!.id);
       setTimeout(() => {
-        window.location.href = '/tasks';
+        window.location.replace('/tasks');
       }, 1000);
     }
   });
@@ -689,7 +689,7 @@ const pageDescription = "Sign in to your TodoList account to access your tasks f
       if (data.session) {
         await migrateLocalStorageTasks(data.user!.id);
         setTimeout(() => {
-          window.location.href = '/tasks';
+          window.location.replace('/tasks');
         }, 2000);
       }
     }
@@ -761,7 +761,7 @@ const pageDescription = "Sign in to your TodoList account to access your tasks f
   // Check if already logged in
   auth.getSession().then(({ data }) => {
     if (data.session) {
-      window.location.href = '/tasks';
+      window.location.replace('/tasks');
     }
   });
 </script>
