@@ -3,8 +3,8 @@
 import CheckIcon from '../icons/CheckIcon.astro';
 ---
 
-<footer class="bg-gradient-to-b from-amber-50 to-amber-100 border-t-2 border-amber-200 mt-auto">
-  <div class="max-w-6xl mx-auto px-6 py-12">
+<footer class="bg-gradient-to-b from-amber-50 to-amber-100 border-t-2 border-amber-200 mt-auto relative z-10">
+  <div class="max-w-6xl mx-auto px-6 py-12 bg-gradient-to-b from-amber-50 to-amber-100">
     <div class="grid grid-cols-1 md:grid-cols-3 gap-12 mb-10">
       <!-- Brand Section -->
       <div class="footer-brand">
@@ -73,30 +73,26 @@ import CheckIcon from '../icons/CheckIcon.astro';
         </div>
       </div>
       
-      <!-- Newsletter -->
+      <!-- Bug Report -->
       <div>
         <h3 class="text-amber-900 font-bold mb-4 text-sm uppercase tracking-wide handwritten flex items-center gap-2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          Report a Bug
+        </h3>
+        <p class="text-amber-800 text-sm mb-3 handwritten">Found an issue? Let us know!</p>
+        <a 
+          href="mailto:krisjohn.rodriguez@gmail.com?subject=TodoList Bug Report&body=Please describe the bug you encountered:"
+          class="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold handwritten text-sm transition-colors"
+        >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
             <polyline points="22,6 12,13 2,6"></polyline>
           </svg>
-          Stay Updated
-        </h3>
-        <p class="text-amber-800 text-sm mb-3 handwritten">Get productivity tips and updates.</p>
-        <form class="flex gap-2" onsubmit="return false;">
-          <input 
-            type="email" 
-            placeholder="Your email" 
-            aria-label="Email for newsletter"
-            class="flex-1 px-3 py-2 border-2 border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-amber-900 handwritten text-sm"
-          />
-          <button 
-            type="submit"
-            class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold handwritten text-sm transition-colors whitespace-nowrap"
-          >
-            Subscribe
-          </button>
-        </form>
+          Email Bug Report
+        </a>
+        <p class="text-amber-700 text-xs mt-2 handwritten">krisjohn.rodriguez@gmail.com</p>
       </div>
     </div>
     
