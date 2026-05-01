@@ -69,100 +69,6 @@ function showConfirmModal(message, onConfirm, onCancel) {
 
 window.showConfirmModal = showConfirmModal;
 
-const sampleTasks = [
-  {
-    id: "1647123456789",
-    text: "Buy groceries",
-    completed: false,
-    createdAt: "2026-03-18T10:30:00.000Z",
-    dueDate: "today",
-    priority: "medium",
-    category: "shopping"
-  },
-  {
-    id: "1647123456790",
-    text: "Plan weekend activities",
-    completed: true,
-    createdAt: "2026-03-18T09:15:00.000Z",
-    dueDate: "tomorrow",
-    completedAt: "2026-03-18T09:26:18.227Z",
-    priority: "low",
-    category: "personal"
-  },
-  {
-    id: "1647123456791",
-    text: "Finish project presentation",
-    completed: true,
-    createdAt: "2026-03-18T08:00:00.000Z",
-    dueDate: "today",
-    priority: "high",
-    category: "work"
-  },
-  {
-    id: "1647123456792",
-    text: "Call dentist for appointment",
-    completed: true,
-    createdAt: "2026-03-18T07:45:00.000Z",
-    dueDate: "tomorrow",
-    completedAt: "2026-03-18T09:26:16.828Z",
-    priority: "medium",
-    category: "health"
-  },
-  {
-    id: "1773825297017",
-    text: "Play tekken",
-    completed: true,
-    createdAt: "2026-03-18T09:14:57.017Z",
-    completedAt: "2026-03-18T09:15:12.517Z",
-    dueDate: "today",
-    priority: "none",
-    category: "personal"
-  },
-  {
-    id: "1773825998012",
-    text: "Continue with the final task",
-    completed: false,
-    createdAt: "2026-03-18T09:26:38.012Z",
-    completedAt: null,
-    dueDate: "tomorrow",
-    priority: "high",
-    category: "work"
-  }
-];
-
-const sampleNotes = [
-  {
-    id: "1773825896848",
-    title: "Gym water",
-    content: "Pocari Sweat",
-    createdAt: "2026-03-18T09:24:56.848Z"
-  },
-  {
-    id: "1647123456793", 
-    title: "Meeting Notes",
-    content: "Discuss project timeline\nReview budget allocation\nAssign team responsibilities",
-    createdAt: "2026-03-17T10:30:00.000Z"
-  },
-  {
-    id: "1647123456794",
-    title: "Weekend Plans",
-    content: "Visit the farmer's market\nTry that new restaurant downtown\nFinish reading the book",
-    createdAt: "2026-03-17T09:20:00.000Z"
-  },
-  {
-    id: "1647123456795",
-    title: "Shopping List",
-    content: "Milk\nBread\nEggs\nApples\nChicken breast\nRice",
-    createdAt: "2026-03-17T08:10:00.000Z"
-  },
-  {
-    id: "1647123456796",
-    title: "Ideas for App",
-    content: "Add dark mode toggle\nImplement categories for tasks\nAdd due dates\nCreate export feature",
-    createdAt: "2026-03-17T07:30:00.000Z"
-  }
-];
-
 // Date management functions
 function getCurrentDateString() {
   return new Date().toDateString();
@@ -261,13 +167,13 @@ async function checkAndMigrateTasks() {
 document.addEventListener('DOMContentLoaded', async function() {
   console.log('DOMContentLoaded event fired');
   
-  // Initialize localStorage with sample data if empty
+  // Don't initialize with sample data - let users start empty
   if (!localStorage.getItem('todolist_uiverse_tasks')) {
-    localStorage.setItem('todolist_uiverse_tasks', JSON.stringify(sampleTasks));
-    console.log('Initialized tasks in localStorage');
+    localStorage.setItem('todolist_uiverse_tasks', JSON.stringify([]));
+    console.log('Initialized empty tasks in localStorage');
   }
   if (!localStorage.getItem('todolist_notes')) {
-    localStorage.setItem('todolist_notes', JSON.stringify(sampleNotes));
+    localStorage.setItem('todolist_notes', JSON.stringify([]));
     console.log('Initialized notes in localStorage');
   }
   
@@ -295,7 +201,7 @@ async function getUiverseTasks() {
   
   // Fallback to localStorage
   const stored = localStorage.getItem('todolist_uiverse_tasks');
-  return stored ? JSON.parse(stored) : sampleTasks.slice();
+  return stored ? JSON.parse(stored) : [];
 }
   
   // Expose globally for subtasks module
@@ -482,7 +388,7 @@ async function getUiverseTasks() {
     
     // Fallback to localStorage
     const stored = localStorage.getItem('todolist_notes');
-    return stored ? JSON.parse(stored) : sampleNotes.slice();
+    return stored ? JSON.parse(stored) : [];
   }
 
   async function saveNotes(notes) {

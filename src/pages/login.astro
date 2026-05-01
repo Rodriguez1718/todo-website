@@ -685,6 +685,8 @@ const pageDescription = "Sign in to your TodoList account to access your tasks f
       disableForm(form, false);
     } else {
       showMessage('Account created! Please check your email to verify.', 'success');
+      // Clear localStorage for new user to ensure empty start
+      localStorage.clear();
       // Some Supabase configs auto-confirm, redirect if session exists
       if (data.session) {
         await migrateLocalStorageTasks(data.user!.id);
