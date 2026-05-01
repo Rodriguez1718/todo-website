@@ -10,6 +10,65 @@ function generateUUID() {
   });
 }
 
+// Custom confirm modal
+function showConfirmModal(message, onConfirm, onCancel) {
+  const modal = document.createElement('div');
+  modal.className = 'confirm-modal-overlay';
+  modal.innerHTML = `
+    <div class="confirm-modal">
+      <div class="confirm-modal-icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+      <h3 class="confirm-modal-title">Confirm Action</h3>
+      <p class="confirm-modal-message">${message}</p>
+      <div class="confirm-modal-actions">
+        <button class="confirm-modal-btn confirm-modal-cancel">Cancel</button>
+        <button class="confirm-modal-btn confirm-modal-confirm">Delete</button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  // Focus trap
+  const confirmBtn = modal.querySelector('.confirm-modal-confirm');
+  const cancelBtn = modal.querySelector('.confirm-modal-cancel');
+  
+  setTimeout(() => modal.classList.add('show'), 10);
+  
+  const close = (confirmed) => {
+    modal.classList.remove('show');
+    setTimeout(() => {
+      modal.remove();
+      if (confirmed && onConfirm) onConfirm();
+      if (!confirmed && onCancel) onCancel();
+    }, 200);
+  };
+  
+  confirmBtn.addEventListener('click', () => close(true));
+  cancelBtn.addEventListener('click', () => close(false));
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) close(false);
+  });
+  
+  // Keyboard
+  const handleKey = (e) => {
+    if (e.key === 'Escape') {
+      close(false);
+      document.removeEventListener('keydown', handleKey);
+    }
+  };
+  document.addEventListener('keydown', handleKey);
+  
+  cancelBtn.focus();
+}
+
+window.showConfirmModal = showConfirmModal;
+
 const sampleTasks = [
   {
     id: "1647123456789",
@@ -780,17 +839,25 @@ container.innerHTML = `
       const newCategory = categorySelect.value;
       
       if (newText) {
-        task.text = newText;
-        task.priority = newPriority;
-        task.category = newCategory;
+        const loadingToast = window.showLoadingToast('Updating task...');
         
-        await saveUiverseTasks(tasks);
-        await loadUiverseTasks();
-        showToast('Task updated', 'success', 2000);
-        
-        // Close modal
-        modal.classList.add('hidden');
-        form.removeEventListener('submit', handleSubmit);
+        try {
+          task.text = newText;
+          task.priority = newPriority;
+          task.category = newCategory;
+          
+          await saveUiverseTasks(tasks);
+          await loadUiverseTasks();
+          
+          window.hideLoadingToast(loadingToast, 'Task updated', 'success', 2000);
+          
+          // Close modal
+          modal.classList.add('hidden');
+          form.removeEventListener('submit', handleSubmit);
+        } catch (error) {
+          console.error('Failed to update task:', error);
+          window.hideLoadingToast(loadingToast, 'Failed to update task', 'error', 3000);
+        }
       }
     };
     
@@ -828,15 +895,24 @@ container.innerHTML = `
     
     if (!task) return;
     
-    const confirmed = confirm(`Delete task: "${task.text}"?\n\nThis cannot be undone.`);
-    
-    if (confirmed) {
-      const filtered = tasks.filter(t => t.id !== taskId);
-      await saveUiverseTasks(filtered);
-      await loadUiverseTasks();
-      updateStats();
-      showToast('Task deleted', 'success', 2000);
-    }
+    showConfirmModal(
+      `Delete task: "${task.text}"? This cannot be undone.`,
+      async () => {
+        const loadingToast = window.showLoadingToast('Deleting task...');
+        
+        try {
+          const filtered = tasks.filter(t => t.id !== taskId);
+          await saveUiverseTasks(filtered);
+          await loadUiverseTasks();
+          updateStats();
+          
+          window.hideLoadingToast(loadingToast, 'Task deleted', 'success', 2000);
+        } catch (error) {
+          console.error('Failed to delete task:', error);
+          window.hideLoadingToast(loadingToast, 'Failed to delete task', 'error', 3000);
+        }
+      }
+    );
   }
 
   function createNoteElement(note) {

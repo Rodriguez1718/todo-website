@@ -317,8 +317,18 @@ import EmptyLargeIcon from "../icons/EmptyLargeIcon.astro";
 <div id="edit-task-modal" class="modal-overlay hidden" role="dialog" aria-labelledby="edit-task-title" aria-modal="true">
   <div class="modal">
     <div class="flex justify-between items-center mb-4">
-      <h3 id="edit-task-title" class="text-xl font-bold text-amber-900 handwritten">Edit Task</h3>
-      <button id="close-edit-modal" type="button" aria-label="Close" class="text-amber-600 hover:text-amber-800 text-2xl leading-none">&times;</button>
+      <h3 id="edit-task-title" class="confirm-modal-title" style="margin: 0;">Edit Task</h3>
+      <button 
+        id="close-edit-modal" 
+        type="button" 
+        aria-label="Close" 
+        class="text-amber-600 hover:text-amber-800 transition-colors"
+        style="background: none; border: none; cursor: pointer; padding: 0.25rem; font-size: 1.5rem; line-height: 1;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
     </div>
     
     <form id="edit-task-form" class="space-y-4">
@@ -360,19 +370,20 @@ import EmptyLargeIcon from "../icons/EmptyLargeIcon.astro";
         </select>
       </div>
       
-      <div class="flex gap-3 pt-2">
-        <button 
-          type="submit" 
-          class="flex-1 bg-amber-600 hover:bg-amber-700 text-white px-6 py-2 rounded-lg font-bold handwritten transition-colors"
-        >
-          Save Changes
-        </button>
+      <div class="confirm-modal-actions">
         <button 
           type="button" 
           id="cancel-edit-btn"
-          class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded-lg font-bold handwritten transition-colors"
+          class="confirm-modal-btn confirm-modal-cancel"
         >
           Cancel
+        </button>
+        <button 
+          type="submit" 
+          class="confirm-modal-btn"
+          style="background: #d97706; color: white; border-color: #d97706;"
+        >
+          Save Changes
         </button>
       </div>
     </form>

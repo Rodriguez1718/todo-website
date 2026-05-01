@@ -68,67 +68,219 @@
     }
   };
 
-  // Toggle subtask completion
+  // Queue for sequential saves
+  let saveQueue = Promise.resolve();
+  
+  // Toggle subtask completion with optimistic update
   window.toggleSubtask = async function(parentId, subtaskId) {
-    const loadingToast = window.showLoadingToast('Updating...');
+    // Optimistic UI update - instant feedback
+    const subtaskElement = document.querySelector(`[data-subtask-id="${subtaskId}"]`);
+    if (!subtaskElement) return;
     
-    try {
-      const tasks = await window.getUiverseTasks();
-      const parentTask = findTaskRecursive(tasks, parentId);
-      
-      if (!parentTask || !parentTask.subtasks) {
-        window.hideLoadingToast(loadingToast);
-        return;
-      }
-      
-      const subtask = parentTask.subtasks.find(st => st.id === subtaskId);
-      if (!subtask) {
-        window.hideLoadingToast(loadingToast);
-        return;
-      }
-      
-      subtask.completed = !subtask.completed;
-      subtask.completedAt = subtask.completed ? new Date().toISOString() : null;
-      
-      await window.saveUiverseTasks(tasks);
-      await window.loadUiverseTasks();
-      if (window.updateStats) window.updateStats();
-      
-      if (subtask.completed) {
-        window.hideLoadingToast(loadingToast, 'Subtask completed!', 'success', 1500);
+    const checkbox = subtaskElement.querySelector('input[type="checkbox"]');
+    const textSpan = subtaskElement.querySelector('span.flex-1');
+    
+    if (!checkbox) return;
+    
+    const newState = checkbox.checked;
+    
+    // Update UI immediately
+    if (textSpan) {
+      if (newState) {
+        textSpan.classList.add('line-through', 'opacity-60');
       } else {
-        window.hideLoadingToast(loadingToast);
+        textSpan.classList.remove('line-through', 'opacity-60');
       }
-    } catch (error) {
-      console.error('Failed to toggle subtask:', error);
-      window.hideLoadingToast(loadingToast, 'Failed to update subtask', 'error', 3000);
     }
+    
+    // Add subtle saving indicator
+    checkbox.style.opacity = '0.5';
+    
+    // Queue the save operation
+    saveQueue = saveQueue.then(async () => {
+      try {
+        const tasks = await window.getUiverseTasks();
+        const parentTask = findTaskRecursive(tasks, parentId);
+        
+        if (!parentTask || !parentTask.subtasks) {
+          checkbox.style.opacity = '1';
+          return;
+        }
+        
+        const subtask = parentTask.subtasks.find(st => st.id === subtaskId);
+        if (!subtask) {
+          checkbox.style.opacity = '1';
+          return;
+        }
+        
+        subtask.completed = newState;
+        subtask.completedAt = newState ? new Date().toISOString() : null;
+        
+        await window.saveUiverseTasks(tasks);
+        
+        // Update progress indicator
+        const parentElement = document.querySelector(`[data-task-id="${parentId}"]`);
+        if (parentElement && parentTask.subtasks) {
+          const completed = parentTask.subtasks.filter(st => st.completed).length;
+          const total = parentTask.subtasks.length;
+          const progressIndicator = parentElement.querySelector('.subtask-progress');
+          if (progressIndicator) {
+            progressIndicator.textContent = `${completed}/${total}`;
+          }
+        }
+        
+        // Update stats
+        if (window.updateStats) window.updateStats();
+        
+        // Restore opacity
+        checkbox.style.opacity = '1';
+        
+        // Show toast only after save completes
+        if (newState) {
+          window.showToast('Subtask completed!', 'success', 1500);
+        } else {
+          window.showToast('Subtask reopened', 'info', 1500);
+        }
+      } catch (error) {
+        console.error('Failed to toggle subtask:', error);
+        
+        // Revert UI on error
+        checkbox.checked = !newState;
+        checkbox.style.opacity = '1';
+        if (textSpan) {
+          if (!newState) {
+            textSpan.classList.add('line-through', 'opacity-60');
+          } else {
+            textSpan.classList.remove('line-through', 'opacity-60');
+          }
+        }
+        
+        window.showToast('Failed to update subtask', 'error', 3000);
+      }
+    });
+  };
+
+  // Edit subtask
+  window.editSubtask = async function(parentId, subtaskId) {
+    const tasks = await window.getUiverseTasks();
+    const parentTask = findTaskRecursive(tasks, parentId);
+    
+    if (!parentTask || !parentTask.subtasks) return;
+    
+    const subtask = parentTask.subtasks.find(st => st.id === subtaskId);
+    if (!subtask) return;
+    
+    // Create modal
+    const modal = document.createElement('div');
+    modal.className = 'confirm-modal-overlay';
+    modal.innerHTML = `
+      <div class="confirm-modal" style="max-width: 500px;">
+        <h3 class="confirm-modal-title">Edit Subtask</h3>
+        <form id="edit-subtask-form" style="margin-bottom: 1.5rem;">
+          <input 
+            type="text" 
+            id="edit-subtask-input"
+            value="${subtask.text.replace(/"/g, '&quot;')}"
+            class="w-full px-4 py-3 border-2 border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-amber-900 handwritten text-lg"
+            placeholder="Subtask description..."
+            required
+          />
+        </form>
+        <div class="confirm-modal-actions">
+          <button type="button" class="confirm-modal-btn confirm-modal-cancel" id="cancel-edit-subtask">Cancel</button>
+          <button type="submit" form="edit-subtask-form" class="confirm-modal-btn" style="background: #d97706; color: white; border-color: #d97706;">Save</button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    const input = modal.querySelector('#edit-subtask-input');
+    const form = modal.querySelector('#edit-subtask-form');
+    const cancelBtn = modal.querySelector('#cancel-edit-subtask');
+    
+    setTimeout(() => {
+      modal.classList.add('show');
+      input.focus();
+      input.select();
+    }, 10);
+    
+    const close = () => {
+      modal.classList.remove('show');
+      setTimeout(() => modal.remove(), 200);
+    };
+    
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+      
+      const newText = input.value.trim();
+      
+      if (newText && newText !== subtask.text) {
+        close();
+        
+        const loadingToast = window.showLoadingToast('Updating subtask...');
+        
+        try {
+          subtask.text = newText;
+          
+          await window.saveUiverseTasks(tasks);
+          await window.loadUiverseTasks();
+          if (window.updateStats) window.updateStats();
+          
+          window.hideLoadingToast(loadingToast, 'Subtask updated', 'success', 1500);
+        } catch (error) {
+          console.error('Failed to edit subtask:', error);
+          window.hideLoadingToast(loadingToast, 'Failed to update subtask', 'error', 3000);
+        }
+      } else {
+        close();
+      }
+    };
+    
+    form.addEventListener('submit', handleSubmit);
+    cancelBtn.addEventListener('click', close);
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) close();
+    });
+    
+    const handleKey = (e) => {
+      if (e.key === 'Escape') {
+        close();
+        document.removeEventListener('keydown', handleKey);
+      }
+    };
+    document.addEventListener('keydown', handleKey);
   };
 
   // Delete subtask
   window.deleteSubtask = async function(parentId, subtaskId) {
-    const loadingToast = window.showLoadingToast('Deleting...');
+    const tasks = await window.getUiverseTasks();
+    const parentTask = findTaskRecursive(tasks, parentId);
     
-    try {
-      const tasks = await window.getUiverseTasks();
-      const parentTask = findTaskRecursive(tasks, parentId);
-      
-      if (!parentTask || !parentTask.subtasks) {
-        window.hideLoadingToast(loadingToast);
-        return;
+    if (!parentTask || !parentTask.subtasks) return;
+    
+    const subtask = parentTask.subtasks.find(st => st.id === subtaskId);
+    if (!subtask) return;
+    
+    window.showConfirmModal(
+      `Delete subtask: "${subtask.text}"? This cannot be undone.`,
+      async () => {
+        const loadingToast = window.showLoadingToast('Deleting subtask...');
+        
+        try {
+          parentTask.subtasks = parentTask.subtasks.filter(st => st.id !== subtaskId);
+          
+          await window.saveUiverseTasks(tasks);
+          await window.loadUiverseTasks();
+          if (window.updateStats) window.updateStats();
+          
+          window.hideLoadingToast(loadingToast, 'Subtask deleted', 'info', 1500);
+        } catch (error) {
+          console.error('Failed to delete subtask:', error);
+          window.hideLoadingToast(loadingToast, 'Failed to delete subtask', 'error', 3000);
+        }
       }
-      
-      parentTask.subtasks = parentTask.subtasks.filter(st => st.id !== subtaskId);
-      
-      await window.saveUiverseTasks(tasks);
-      await window.loadUiverseTasks();
-      if (window.updateStats) window.updateStats();
-      
-      window.hideLoadingToast(loadingToast, 'Subtask deleted', 'info', 1500);
-    } catch (error) {
-      console.error('Failed to delete subtask:', error);
-      window.hideLoadingToast(loadingToast, 'Failed to delete subtask', 'error', 3000);
-    }
+    );
   };
 
   // Get subtask progress
@@ -150,7 +302,7 @@
     }
     
     const subtasksHtml = task.subtasks.map(subtask => `
-      <div class="subtask-item" data-subtask-id="${subtask.id}">
+      <div class="subtask-item group" data-subtask-id="${subtask.id}">
         <label class="flex items-center gap-2 cursor-pointer">
           <input 
             type="checkbox" 
@@ -159,15 +311,26 @@
             class="w-4 h-4 text-amber-600 focus:ring-amber-500 focus:ring-2 cursor-pointer"
           />
           <span class="flex-1 text-sm handwritten ${subtask.completed ? 'line-through opacity-60' : ''}">${subtask.text}</span>
-          <button 
-            onclick="window.deleteSubtask('${task.id}', '${subtask.id}')"
-            class="opacity-0 group-hover:opacity-100 text-red-600 hover:text-red-800 transition-opacity"
-            title="Delete subtask">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
+          <div class="subtask-actions opacity-0 group-hover:opacity-100 flex gap-1 transition-opacity">
+            <button 
+              onclick="window.editSubtask('${task.id}', '${subtask.id}')"
+              class="text-amber-600 hover:text-amber-800 transition-colors"
+              title="Edit subtask">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+            </button>
+            <button 
+              onclick="window.deleteSubtask('${task.id}', '${subtask.id}')"
+              class="text-red-600 hover:text-red-800 transition-colors"
+              title="Delete subtask">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
         </label>
       </div>
     `).join('');

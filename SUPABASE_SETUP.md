@@ -109,17 +109,106 @@ CREATE POLICY "Users can delete their own notes"
 
 ## 5. Enable OAuth Providers (Optional)
 
-### Google OAuth
-1. Go to **Authentication** → **Providers** → **Google**
-2. Enable Google provider
-3. Follow instructions to create Google OAuth app
-4. Add credentials
+### Google OAuth Setup
 
-### GitHub OAuth
-1. Go to **Authentication** → **Providers** → **GitHub**
-2. Enable GitHub provider
-3. Follow instructions to create GitHub OAuth app
-4. Add credentials
+#### Step 1: Get Supabase Callback URL
+1. Go to your Supabase project dashboard
+2. Navigate to **Authentication** → **Providers** → **Google**
+3. Copy the **Callback URL (for OAuth)** - looks like: `https://[your-project-ref].supabase.co/auth/v1/callback`
+
+#### Step 2: Create Google OAuth App
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select existing one
+3. Navigate to **APIs & Services** → **Credentials**
+4. Click **Create Credentials** → **OAuth client ID**
+5. If prompted, configure OAuth consent screen first:
+   - Click **Configure Consent Screen**
+   - Choose **External** (for public app)
+   - Fill in:
+     - App name: "TodoList App" (or your app name)
+     - User support email: your email
+     - Developer contact: your email
+   - Click **Save and Continue**
+   - Skip Scopes (click **Save and Continue**)
+   - Skip Test users (click **Save and Continue**)
+   - Click **Back to Dashboard**
+
+#### Step 3: Create OAuth Client ID
+1. Back in **Credentials**, click **Create Credentials** → **OAuth client ID**
+2. Application type: **Web application**
+3. Name: "TodoList Web Client"
+4. **Authorized JavaScript origins**: Add your domains
+   - `http://localhost:4321` (for local dev)
+   - `https://your-vercel-domain.vercel.app` (for production)
+5. **Authorized redirect URIs**: Add Supabase callback URL from Step 1
+   - `https://[your-project-ref].supabase.co/auth/v1/callback`
+6. Click **Create**
+7. Copy **Client ID** and **Client Secret**
+
+#### Step 4: Configure Supabase
+1. Back in Supabase: **Authentication** → **Providers** → **Google**
+2. Toggle **Enable Sign in with Google**
+3. Paste **Client ID** (from Google)
+4. Paste **Client Secret** (from Google)
+5. Click **Save**
+
+---
+
+### GitHub OAuth Setup
+
+#### Step 1: Get Supabase Callback URL
+1. Go to your Supabase project dashboard
+2. Navigate to **Authentication** → **Providers** → **GitHub**
+3. Copy the **Callback URL (for OAuth)** - looks like: `https://[your-project-ref].supabase.co/auth/v1/callback`
+
+#### Step 2: Create GitHub OAuth App
+1. Go to [GitHub Settings](https://github.com/settings/developers)
+2. Click **OAuth Apps** → **New OAuth App**
+3. Fill in the form:
+   - **Application name**: "TodoList App"
+   - **Homepage URL**: 
+     - Local: `http://localhost:4321`
+     - Production: `https://your-vercel-domain.vercel.app`
+   - **Application description**: "A todo list application with task management"
+   - **Authorization callback URL**: Paste Supabase callback URL from Step 1
+     - `https://[your-project-ref].supabase.co/auth/v1/callback`
+4. Click **Register application**
+
+#### Step 3: Get Client Credentials
+1. After registration, you'll see your **Client ID** - copy it
+2. Click **Generate a new client secret**
+3. Copy the **Client Secret** (you won't see it again!)
+
+#### Step 4: Configure Supabase
+1. Back in Supabase: **Authentication** → **Providers** → **GitHub**
+2. Toggle **Enable Sign in with GitHub**
+3. Paste **Client ID** (from GitHub)
+4. Paste **Client Secret** (from GitHub)
+5. Click **Save**
+
+---
+
+### Testing OAuth
+
+1. Go to your login page: `http://localhost:4321/login`
+2. Click **Continue with Google** or **Continue with GitHub**
+3. Authorize the app
+4. You should be redirected back and logged in
+
+### Troubleshooting
+
+**"Redirect URI mismatch" error:**
+- Verify callback URL in Google/GitHub matches Supabase exactly
+- Check for trailing slashes
+- Ensure HTTPS in production
+
+**"OAuth app not found":**
+- Verify Client ID and Secret are correct
+- Check if OAuth app is active in Google/GitHub
+
+**"Access denied":**
+- Check OAuth consent screen is published (Google)
+- Verify email is added to test users if app is in testing mode (Google)
 
 ## 6. Configure Email Templates (Optional)
 
