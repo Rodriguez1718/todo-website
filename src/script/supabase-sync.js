@@ -51,6 +51,25 @@ async function migrateLocalStorageToSupabase() {
   }
   
   try {
+    // Check if user already has data in Supabase (new user check)
+    const { data: existingTasks } = await supabase
+      .from('tasks')
+      .select('id')
+      .eq('user_id', currentUser.id)
+      .limit(1);
+    
+    const { data: existingNotes } = await supabase
+      .from('notes')
+      .select('id')
+      .eq('user_id', currentUser.id)
+      .limit(1);
+    
+    if ((existingTasks && existingTasks.length > 0) || (existingNotes && existingNotes.length > 0)) {
+      console.log('User already has data in Supabase, skipping migration');
+      localStorage.setItem(migrationKey, 'true');
+      return;
+    }
+    
     // Migrate tasks
     const localTasks = localStorage.getItem('todolist_uiverse_tasks');
     if (localTasks) {
