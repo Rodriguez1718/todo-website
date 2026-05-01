@@ -517,11 +517,28 @@
   const statsToggle = document.getElementById('stats-toggle');
   const closeStats = document.getElementById('close-stats');
   
-  function updateStats() {
-    const stored = localStorage.getItem('todolist_uiverse_tasks');
-    if (!stored) return;
-    
-    const tasks = JSON.parse(stored);
+  async function updateStats() {
+    // Get tasks from global function
+    const tasks = await (window as any).getAllTasks?.() || [];
+    if (!tasks || tasks.length === 0) {
+      // Reset to zero if no tasks
+      document.getElementById('stat-total')!.textContent = '0';
+      document.getElementById('stat-completed')!.textContent = '0';
+      document.getElementById('stat-active')!.textContent = '0';
+      document.getElementById('stat-completion-rate')!.textContent = '0%';
+      document.getElementById('stat-high')!.textContent = '0';
+      document.getElementById('stat-medium')!.textContent = '0';
+      document.getElementById('stat-low')!.textContent = '0';
+      const progressBar = document.getElementById('progress-bar');
+      const progressText = document.getElementById('progress-text');
+      if (progressBar) progressBar.style.width = '0%';
+      if (progressText) progressText.textContent = '0%';
+      const categoryStats = document.getElementById('category-stats');
+      if (categoryStats) {
+        categoryStats.innerHTML = '<p class="text-sm text-amber-700 handwritten col-span-full text-center">No categories yet</p>';
+      }
+      return;
+    }
     
     // Helper to count all tasks including subtasks
     function countAllTasks(taskList: any[]) {
@@ -602,8 +619,8 @@
     }
   }
   
-  function showStats() {
-    updateStats();
+  async function showStats() {
+    await updateStats();
     statsModal?.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
   }
