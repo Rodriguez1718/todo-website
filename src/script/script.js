@@ -823,7 +823,7 @@ container.innerHTML = `
 
   function createNoteElement(note) {
     const noteDiv = document.createElement('div');
-    noteDiv.className = 'note-item border border-amber-200 rounded-lg p-4 bg-amber-25';
+    noteDiv.className = 'note-item border border-amber-200 rounded-lg p-4 bg-amber-25 group';
     noteDiv.dataset.noteId = note.id;
     
     const formattedDate = formatDate(note.createdAt);
@@ -831,10 +831,23 @@ container.innerHTML = `
     
     noteDiv.innerHTML = `
       <div class="flex justify-between items-start mb-2">
-        <h4 class="font-bold text-amber-900 handwritten">
+        <h4 class="font-bold text-amber-900 handwritten flex-1">
           ${note.title}
         </h4>
-        <button class="delete-note text-amber-600 hover:text-amber-800 text-sm">✕</button>
+        <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button class="edit-note text-amber-600 hover:text-amber-800 transition-colors p-1" title="Edit note">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"></path>
+              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+          </button>
+          <button class="delete-note text-red-600 hover:text-red-800 transition-colors p-1" title="Delete note">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
       </div>
       <p class="text-amber-700 handwritten whitespace-pre-line">
         ${formattedContent}
@@ -844,20 +857,134 @@ container.innerHTML = `
       </div>
     `;
 
+    // Add edit functionality
+    const editBtn = noteDiv.querySelector('.edit-note');
+    editBtn.addEventListener('click', () => editNote(note));
+
     // Add delete functionality
     const deleteBtn = noteDiv.querySelector('.delete-note');
-    deleteBtn.addEventListener('click', async () => {
-      const notes = await getNotes();
-      const filteredNotes = notes.filter((n) => n.id !== note.id);
-      await saveNotes(filteredNotes);
-      noteDiv.remove();
-      checkNotesEmpty();
-      
-      // Show toast
-      showToast('Note deleted', 'info', 2000);
+    deleteBtn.addEventListener('click', () => {
+      window.showConfirmModal(
+        `Delete note: "${note.title}"? This cannot be undone.`,
+        async () => {
+          const loadingToast = window.showLoadingToast('Deleting note...');
+          
+          try {
+            const notes = await getNotes();
+            const filteredNotes = notes.filter((n) => n.id !== note.id);
+            await saveNotes(filteredNotes);
+            noteDiv.remove();
+            checkNotesEmpty();
+            
+            window.hideLoadingToast(loadingToast, 'Note deleted', 'info', 2000);
+          } catch (error) {
+            console.error('Failed to delete note:', error);
+            window.hideLoadingToast(loadingToast, 'Failed to delete note', 'error', 3000);
+          }
+        }
+      );
     });
     
     return noteDiv;
+  }
+
+  // Edit note function
+  async function editNote(note) {
+    const modal = document.createElement('div');
+    modal.className = 'confirm-modal-overlay';
+    modal.innerHTML = `
+      <div class="confirm-modal" style="max-width: 600px;">
+        <h3 class="confirm-modal-title">Edit Note</h3>
+        <form id="edit-note-form" style="margin-bottom: 1.5rem;">
+          <div style="margin-bottom: 1rem;">
+            <input 
+              type="text" 
+              id="edit-note-title"
+              value="${note.title.replace(/"/g, '&quot;')}"
+              class="w-full px-4 py-3 border-2 border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-amber-900 handwritten text-lg"
+              placeholder="Note title..."
+              required
+            />
+          </div>
+          <textarea 
+            id="edit-note-content"
+            rows="6"
+            class="w-full px-4 py-3 border-2 border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-amber-900 handwritten resize-none"
+            placeholder="Note content..."
+            required
+          >${note.content}</textarea>
+        </form>
+        <div class="confirm-modal-actions">
+          <button type="button" class="confirm-modal-btn confirm-modal-cancel" id="cancel-edit-note">Cancel</button>
+          <button type="submit" form="edit-note-form" class="confirm-modal-btn" style="background: #d97706; color: white; border-color: #d97706;">Save Changes</button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    const titleInput = modal.querySelector('#edit-note-title');
+    const contentInput = modal.querySelector('#edit-note-content');
+    const form = modal.querySelector('#edit-note-form');
+    const cancelBtn = modal.querySelector('#cancel-edit-note');
+    
+    setTimeout(() => {
+      modal.classList.add('show');
+      titleInput.focus();
+      titleInput.select();
+    }, 10);
+    
+    const close = () => {
+      modal.classList.remove('show');
+      setTimeout(() => modal.remove(), 200);
+    };
+    
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+      
+      const newTitle = titleInput.value.trim();
+      const newContent = contentInput.value.trim();
+      
+      if (newTitle && newContent && (newTitle !== note.title || newContent !== note.content)) {
+        close();
+        
+        const loadingToast = window.showLoadingToast('Updating note...');
+        
+        try {
+          const notes = await getNotes();
+          const noteIndex = notes.findIndex(n => n.id === note.id);
+          
+          if (noteIndex !== -1) {
+            notes[noteIndex].title = newTitle;
+            notes[noteIndex].content = newContent;
+            
+            await saveNotes(notes);
+            await loadNotes();
+            
+            window.hideLoadingToast(loadingToast, 'Note updated', 'success', 2000);
+          }
+        } catch (error) {
+          console.error('Failed to update note:', error);
+          window.hideLoadingToast(loadingToast, 'Failed to update note', 'error', 3000);
+        }
+      } else {
+        close();
+      }
+    };
+    
+    form.addEventListener('submit', handleSubmit);
+    cancelBtn.addEventListener('click', close);
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) close();
+    });
+    
+    const handleKey = (e) => {
+      if (e.key === 'Escape') {
+        close();
+        document.removeEventListener('keydown', handleKey);
+      }
+    };
+    document.addEventListener('keydown', handleKey);
   }
 
   // Helper: create completed separator with buttons
@@ -1193,23 +1320,38 @@ container.innerHTML = `
       const draggedId = draggedElement.dataset.taskId;
       const targetId = targetContainer.dataset.taskId;
       
-      // Get tasks and reorder
-      const tasks = await getUiverseTasks();
-      const draggedTask = tasks.find(t => t.id === draggedId);
-      const targetTask = tasks.find(t => t.id === targetId);
+      const loadingToast = window.showLoadingToast('Reordering task...');
       
-      if (draggedTask && targetTask && draggedTask.dueDate === targetTask.dueDate) {
-        const draggedIndex = tasks.indexOf(draggedTask);
-        const targetIndex = tasks.indexOf(targetTask);
+      try {
+        // Get tasks (hierarchical from Supabase)
+        const tasks = await getUiverseTasks();
         
-        // Remove dragged task and insert at target position
-        tasks.splice(draggedIndex, 1);
-        const newTargetIndex = tasks.indexOf(targetTask);
-        tasks.splice(newTargetIndex, 0, draggedTask);
+        // Flatten to work with reorder (only root tasks, not subtasks)
+        const rootTasks = tasks.filter(t => !t.parent_id);
         
-        await saveUiverseTasks(tasks);
-        await loadUiverseTasks();
-        showToast('Task reordered', 'success', 1500);
+        const draggedTask = rootTasks.find(t => t.id === draggedId);
+        const targetTask = rootTasks.find(t => t.id === targetId);
+        
+        if (draggedTask && targetTask && draggedTask.dueDate === targetTask.dueDate) {
+          const draggedIndex = rootTasks.indexOf(draggedTask);
+          const targetIndex = rootTasks.indexOf(targetTask);
+          
+          // Remove dragged task and insert at target position
+          rootTasks.splice(draggedIndex, 1);
+          const newTargetIndex = rootTasks.indexOf(targetTask);
+          rootTasks.splice(newTargetIndex, 0, draggedTask);
+          
+          // Save reordered root tasks (Supabase will handle hierarchy)
+          await saveUiverseTasks(rootTasks);
+          await loadUiverseTasks();
+          
+          window.hideLoadingToast(loadingToast, 'Task reordered', 'success', 1500);
+        } else {
+          window.hideLoadingToast(loadingToast);
+        }
+      } catch (error) {
+        console.error('Failed to reorder task:', error);
+        window.hideLoadingToast(loadingToast, 'Failed to reorder task', 'error', 3000);
       }
     }
     
@@ -1234,23 +1376,29 @@ container.innerHTML = `
     const content = noteContentInput.value.trim();
     
     if (title && content) {
-      const notes = await getNotes();
-      const newNote = {
-        id: generateUUID(),
-        title: title,
-        content: content,
-        createdAt: new Date().toISOString()
-      };
-      notes.unshift(newNote);
-      await saveNotes(notes);
+      const loadingToast = window.showLoadingToast('Saving note...');
       
-      const noteElement = createNoteElement(newNote);
-      notesList.insertBefore(noteElement, notesList.firstChild);
-      hideNoteForm();
-      checkNotesEmpty();
-      
-      // Show success toast
-      showToast('Note saved!', 'success', 2000);
+      try {
+        const notes = await getNotes();
+        const newNote = {
+          id: generateUUID(),
+          title: title,
+          content: content,
+          createdAt: new Date().toISOString()
+        };
+        notes.unshift(newNote);
+        await saveNotes(notes);
+        
+        const noteElement = createNoteElement(newNote);
+        notesList.insertBefore(noteElement, notesList.firstChild);
+        hideNoteForm();
+        checkNotesEmpty();
+        
+        window.hideLoadingToast(loadingToast, 'Note saved!', 'success', 2000);
+      } catch (error) {
+        console.error('Failed to save note:', error);
+        window.hideLoadingToast(loadingToast, 'Failed to save note', 'error', 3000);
+      }
     }
   }
 
