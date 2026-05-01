@@ -40,10 +40,19 @@ const description = "Create and manage your notes. Keep track of important infor
         import '/src/script/supabase-sync.js';
         import '/src/script/script.js';
         
-        // Initialize Supabase sync after page load
+        // Initialize Supabase sync BEFORE app loads
         document.addEventListener('DOMContentLoaded', async () => {
+            console.log('Notes: Initializing Supabase sync...');
+            
             if ((window as any).supabaseSync) {
                 await (window as any).supabaseSync.initializeSync();
+                console.log('Notes: Supabase sync complete');
+            }
+            
+            // Now initialize app with fresh data
+            if ((window as any).initializeApp) {
+                console.log('Notes: Initializing app...');
+                (window as any).initializeApp();
             }
         });
     </script>
