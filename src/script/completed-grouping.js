@@ -160,24 +160,41 @@
     
     document.getElementById('completed-empty-state')?.classList.add('hidden');
     
-    groups.forEach(group => {
+    groups.forEach((group, index) => {
       const groupDiv = document.createElement('div');
       groupDiv.className = 'completed-group';
       
-      const header = document.createElement('div');
+      const header = document.createElement('button');
       header.className = 'completed-group-header';
+      header.setAttribute('type', 'button');
+      header.setAttribute('aria-expanded', 'true');
       header.innerHTML = `
-        <span>${group.header}</span>
+        <div class="flex items-center gap-2">
+          <svg class="chevron-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+          <span>${group.header}</span>
+        </div>
         <span class="completed-group-count">${group.tasks.length}</span>
       `;
       
       const tasksList = document.createElement('ul');
-      tasksList.className = 'space-y-2';
+      tasksList.className = 'space-y-2 completed-tasks-list';
       tasksList.setAttribute('role', 'list');
+      tasksList.style.display = 'block'; // Start expanded
       
       group.tasks.forEach(task => {
         const taskElement = window.createUiverseTaskElement(task);
         tasksList.appendChild(taskElement);
+      });
+      
+      // Toggle collapse/expand
+      header.addEventListener('click', () => {
+        const isExpanded = header.getAttribute('aria-expanded') === 'true';
+        header.setAttribute('aria-expanded', !isExpanded);
+        tasksList.style.display = isExpanded ? 'none' : 'block';
+        header.classList.toggle('collapsed', isExpanded);
+      });
       });
       
       groupDiv.appendChild(header);

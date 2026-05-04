@@ -80,11 +80,24 @@
     const checkbox = subtaskElement.querySelector('input[type="checkbox"]');
     const textSpan = subtaskElement.querySelector('span.flex-1');
     
-    if (!checkbox) return;
+    if (!checkbox || checkbox.disabled) return;
     
     const newState = checkbox.checked;
     
-    // Update UI immediately
+    // Disable checkbox during save
+    checkbox.disabled = true;
+    
+    // Show inline spinner
+    const checkboxParent = checkbox.parentElement;
+    const spinner = document.createElement('div');
+    spinner.className = 'inline-spinner';
+    spinner.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="10" opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/></svg>';
+    spinner.style.cssText = 'position: absolute; left: 0; top: 50%; transform: translateY(-50%);';
+    checkboxParent.style.position = 'relative';
+    checkbox.style.opacity = '0';
+    checkboxParent.appendChild(spinner);
+    
+    // Update text immediately
     if (textSpan) {
       if (newState) {
         textSpan.classList.add('line-through', 'opacity-60');
@@ -93,9 +106,6 @@
       }
     }
     
-    // Add subtle saving indicator
-    checkbox.style.opacity = '0.5';
-    
     // Queue the save operation
     saveQueue = saveQueue.then(async () => {
       try {
@@ -103,14 +113,12 @@
         const parentTask = findTaskRecursive(tasks, parentId);
         
         if (!parentTask || !parentTask.subtasks) {
-          checkbox.style.opacity = '1';
-          return;
+          throw new Error('Parent task not found');
         }
         
         const subtask = parentTask.subtasks.find(st => st.id === subtaskId);
         if (!subtask) {
-          checkbox.style.opacity = '1';
-          return;
+          throw new Error('Subtask not found');
         }
         
         subtask.completed = newState;
@@ -132,9 +140,6 @@
         // Update stats
         if (window.updateStats) window.updateStats();
         
-        // Restore opacity
-        checkbox.style.opacity = '1';
-        
         // Show toast only after save completes
         if (newState) {
           window.showToast('Subtask completed!', 'success', 1500);
@@ -146,7 +151,6 @@
         
         // Revert UI on error
         checkbox.checked = !newState;
-        checkbox.style.opacity = '1';
         if (textSpan) {
           if (!newState) {
             textSpan.classList.add('line-through', 'opacity-60');
@@ -156,6 +160,11 @@
         }
         
         window.showToast('Failed to update subtask', 'error', 3000);
+      } finally {
+        // Remove spinner and restore checkbox
+        spinner.remove();
+        checkbox.style.opacity = '1';
+        checkbox.disabled = false;
       }
     });
   };

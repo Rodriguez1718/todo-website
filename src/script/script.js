@@ -1070,9 +1070,9 @@ container.innerHTML = `
   // Separate by completion status
   const activeTasks = filteredTasks.filter(t => !t.completed);
   
-  // Render active tasks (Today/Tomorrow)
-  const todayActive = activeTasks.filter(t => t.dueDate === 'today');
-  const tomorrowActive = activeTasks.filter(t => t.dueDate === 'tomorrow');
+  // Render active tasks (Today/Tomorrow) - sorted by order field
+  const todayActive = activeTasks.filter(t => t.dueDate === 'today').sort((a, b) => (a.order || 0) - (b.order || 0));
+  const tomorrowActive = activeTasks.filter(t => t.dueDate === 'tomorrow').sort((a, b) => (a.order || 0) - (b.order || 0));
   
   todayActive.forEach(task => {
     const taskElement = createUiverseTaskElement(task);
@@ -1119,6 +1119,11 @@ container.innerHTML = `
       
       try {
         const tasks = await getUiverseTasks();
+        
+        // Calculate next order value (highest order + 1)
+        const sameDateTasks = tasks.filter(t => t.dueDate === selectedDate.value && !t.completed);
+        const maxOrder = sameDateTasks.length > 0 ? Math.max(...sameDateTasks.map(t => t.order || 0)) : -1;
+        
         const newTask = {
           id: generateUUID(),
           text: taskText,
@@ -1127,7 +1132,8 @@ container.innerHTML = `
           completedAt: null,
           dueDate: selectedDate.value,
           priority: priority,
-          category: category
+          category: category,
+          order: maxOrder + 1
         };
         tasks.push(newTask);
         await saveUiverseTasks(tasks);
