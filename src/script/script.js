@@ -639,6 +639,9 @@ container.innerHTML = `
     // Add change event listener for checkbox
     const checkbox = container.querySelector('input[type="checkbox"]');
     checkbox.addEventListener('change', async () => {
+      // Prevent multiple simultaneous toggles
+      if (checkbox.disabled) return;
+      
       // Disable checkbox during save
       checkbox.disabled = true;
       
@@ -652,36 +655,40 @@ container.innerHTML = `
       checkbox.style.opacity = '0';
       checkboxParent.appendChild(spinner);
       
+      const isChecked = checkbox.checked;
+      
       try {
         const tasks = await getUiverseTasks();
         const taskIndex = tasks.findIndex((t) => t.id === task.id);
         if (taskIndex !== -1) {
-          tasks[taskIndex].completed = checkbox.checked;
-          tasks[taskIndex].completedAt = checkbox.checked ? new Date().toISOString() : null;
+          tasks[taskIndex].completed = isChecked;
+          tasks[taskIndex].completedAt = isChecked ? new Date().toISOString() : null;
           await saveUiverseTasks(tasks);
           
           // Update ARIA
-          checkbox.setAttribute('aria-checked', checkbox.checked);
+          checkbox.setAttribute('aria-checked', isChecked);
           
           // Update the container class
-          container.className = `sketchy-task-container ${checkbox.checked ? 'completed' : 'active'}`;
+          container.className = `sketchy-task-container ${isChecked ? 'completed' : 'active'}`;
           
           // Celebration and toast on completion
-          if (checkbox.checked) {
+          if (isChecked) {
             celebrateTaskCompletion(container);
             showToast('Task completed!', 'success', 2000);
           } else {
             showToast('Task reopened', 'info', 2000);
           }
           
-          // Refresh the display
-          await loadUiverseTasks();
-          updateStats();
+          // Refresh the display after a short delay to batch updates
+          setTimeout(async () => {
+            await loadUiverseTasks();
+            updateStats();
+          }, 100);
         }
       } catch (error) {
         console.error('Failed to toggle task:', error);
         // Revert checkbox on error
-        checkbox.checked = !checkbox.checked;
+        checkbox.checked = !isChecked;
         showToast('Failed to update task', 'error', 3000);
       } finally {
         // Remove spinner and restore checkbox

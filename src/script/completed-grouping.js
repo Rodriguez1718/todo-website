@@ -130,8 +130,9 @@
     container.innerHTML = '';
     
     const tasks = await window.getUiverseTasks();
-    const allTasks = flattenTasks(tasks);
-    const completedTasks = allTasks.filter(t => t.completed);
+    // Only get root tasks (no parent_id) - subtasks stay nested
+    const rootTasks = tasks.filter(t => !t.parent_id);
+    const completedTasks = rootTasks.filter(t => t.completed);
     
     // Apply filters
     let filteredTasks = completedTasks;
